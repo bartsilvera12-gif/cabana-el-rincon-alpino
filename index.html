@@ -45,11 +45,22 @@
   .reveal-card-wide .reveal-hover-wide { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; justify-content: center; padding: clamp(28px,5vw,56px); opacity: 0; transform: translateY(12px); transition: opacity .45s ease .55s, transform .5s ease .55s; pointer-events: none; }
   .reveal-card-wide:hover .reveal-hover-wide,
   .reveal-card-wide:focus-within .reveal-hover-wide { opacity: 1; transform: none; pointer-events: auto; }
-  .shine-title { font-family: 'Poppins', sans-serif; font-weight: 600; line-height: 0.98; letter-spacing: -2px; margin: 0; color: #F1F3F2; }
-  .shine-title em { font-style: italic; font-weight: 500; color: #F5D19A; display: block; }
-  .shine-text { position: relative; background-image: linear-gradient(100deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0) 70%); background-size: 220% 100%; background-repeat: no-repeat; -webkit-background-clip: text; background-clip: text; color: inherit; animation: shine 4.5s ease-in-out infinite; }
-  @keyframes shine { 0% { background-position: 220% 0; } 55% { background-position: -120% 0; } 100% { background-position: -120% 0; } }
-  @media (prefers-reduced-motion: reduce) { .shine-text { animation: none; } }
+  .stroke-title { display: block; width: 100%; line-height: 0; }
+  .stroke-title svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .stroke-title text { font-family: 'Poppins', sans-serif; font-weight: 600; letter-spacing: -3px; }
+  .stroke-title .st-outline { fill: none; stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 2600; stroke-dashoffset: 2600; animation: strokeDraw 1.9s cubic-bezier(.4,0,.2,1) forwards; }
+  .stroke-title .st-fill { opacity: 0; clip-path: inset(0 100% 0 0); animation: fillWipe 1.1s cubic-bezier(.55,0,.1,1) 1.5s forwards; }
+  .stroke-title .l1 .st-outline { stroke: #F1F3F2; animation-delay: 0.1s; }
+  .stroke-title .l1 .st-fill { fill: #F1F3F2; }
+  .stroke-title .l2 .st-outline { stroke: #F5D19A; animation-delay: 0.5s; }
+  .stroke-title .l2 .st-fill { fill: #F5D19A; animation-delay: 1.9s; }
+  .stroke-title .l2 text { font-style: italic; font-weight: 500; }
+  @keyframes strokeDraw { to { stroke-dashoffset: 0; } }
+  @keyframes fillWipe { 0% { opacity: 1; clip-path: inset(0 100% 0 0); } 100% { opacity: 1; clip-path: inset(0 0 0 0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .stroke-title .st-outline { stroke-dashoffset: 0; animation: none; }
+    .stroke-title .st-fill { opacity: 1; clip-path: none; animation: none; }
+  }
   .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .9s cubic-bezier(.22,1,.36,1); }
   .reveal.is-in { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
@@ -131,11 +142,19 @@
         <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(22,34,46,0.15) 0%,rgba(22,34,46,0.05) 40%,rgba(22,34,46,0.7) 100%)"></div>
 
 
-        <!-- Título grande (centro-izquierda) -->
-        <div class="hero-title-wrap" style="position:absolute;left:clamp(24px,5vw,60px);top:50%;transform:translateY(-50%);max-width:min(720px,62%);z-index:3;color:#F1F3F2">
-          <h1 class="shine-title" style="font-size:clamp(38px,6.2vw,72px);filter:drop-shadow(0 6px 24px rgba(0,0,0,0.4))">
-            <span class="shine-text">Tu escapada,</span>
-            <em class="shine-text">en plena naturaleza.</em>
+        <!-- Título (abajo-izquierda) -->
+        <div class="hero-title-wrap" style="position:absolute;left:clamp(24px,5vw,60px);right:clamp(24px,5vw,60px);bottom:clamp(80px,12vw,150px);max-width:min(760px,72%);z-index:3;color:#F1F3F2">
+          <h1 aria-label="Tu escapada, en plena naturaleza." style="margin:0;filter:drop-shadow(0 6px 30px rgba(0,0,0,0.35))">
+            <span class="stroke-title" style="font-size:clamp(38px,6.2vw,72px)">
+              <svg class="l1" viewBox="0 0 1120 130" preserveAspectRatio="xMinYMin meet" aria-hidden="true">
+                <text class="st-outline" x="0" y="100" font-size="120">Tu escapada,</text>
+                <text class="st-fill"    x="0" y="100" font-size="120">Tu escapada,</text>
+              </svg>
+              <svg class="l2" viewBox="0 0 1120 130" preserveAspectRatio="xMinYMin meet" aria-hidden="true" style="margin-top:-8px">
+                <text class="st-outline" x="0" y="100" font-size="120">en plena naturaleza.</text>
+                <text class="st-fill"    x="0" y="100" font-size="120">en plena naturaleza.</text>
+              </svg>
+            </span>
           </h1>
 
           <div class="hero-buttons" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:clamp(24px,3vw,34px)">
@@ -161,10 +180,6 @@
         </div>
         <h2 style="font-family:'Poppins',sans-serif;font-weight:500;font-size:clamp(30px,6vw,50px);line-height:1.06;margin:18px 0 0;max-width:22ch;text-wrap:pretty;letter-spacing:-0.3px;color:#F1F3F2">Todo lo que necesitás <em style="font-style:italic;color:#F5D19A">para disfrutar.</em></h2>
         <p style="font-size:clamp(15px,3.6vw,17.5px);line-height:1.7;color:rgba(241,243,242,0.82);margin:20px 0 0;max-width:52ch;text-wrap:pretty">Cabaña El Rincón Alpino se encuentra en Luque – Yuquyry, a pocos minutos de la ciudad, combinando privacidad, naturaleza y todas las comodidades para una escapada diferente.</p>
-      </div>
-      <div class="reveal-hover reveal-hover-wide">
-        <h3 style="font-family:'Poppins',sans-serif;font-weight:500;font-size:clamp(30px,5.5vw,52px);line-height:1.05;margin:0;max-width:16ch;letter-spacing:-0.3px;color:#F1F3F2">Descubrí <em style="font-style:italic;color:#D9A05B">el Rincón Alpino.</em></h3>
-        <a href="#reserva" aria-label="Reservar" style="display:inline-flex;align-items:center;justify-content:center;width:68px;height:68px;border-radius:50%;background:#F1F3F2;color:#16222E;font-size:24px;font-weight:600;margin-top:28px;text-decoration:none;box-shadow:0 10px 26px rgba(0,0,0,0.35)">↗</a>
       </div>
     </div>
   </div>
