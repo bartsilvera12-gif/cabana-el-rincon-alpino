@@ -38,13 +38,14 @@
   .reveal-card .reveal-content { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; justify-content: center; padding: 0 clamp(24px,6%,44px); color: #F1F3F2; opacity: 1; transition: opacity .3s ease; }
   .reveal-card:hover .reveal-content,
   .reveal-card:focus-within .reveal-content { opacity: 0; pointer-events: none; transition-delay: 0s; }
-  .reveal-card-wide { position: relative; display: block; width: 100%; min-height: clamp(360px, 40vw, 480px); border-radius: 24px; overflow: hidden; background: #0f1a24; box-shadow: 0 20px 50px rgba(22,34,46,0.2); border: 0; padding: 0; text-align: left; }
-  .reveal-card-wide .reveal-content-wide { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; justify-content: center; padding: clamp(28px,5vw,56px); opacity: 1; transition: opacity .35s ease .1s; pointer-events: auto; }
-  .reveal-card-wide:hover .reveal-content-wide,
-  .reveal-card-wide:focus-within .reveal-content-wide { opacity: 0; pointer-events: none; transition-delay: 0s; }
-  .reveal-card-wide .reveal-hover-wide { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; justify-content: center; padding: clamp(28px,5vw,56px); opacity: 0; transform: translateY(12px); transition: opacity .45s ease .55s, transform .5s ease .55s; pointer-events: none; }
-  .reveal-card-wide:hover .reveal-hover-wide,
-  .reveal-card-wide:focus-within .reveal-hover-wide { opacity: 1; transform: none; pointer-events: auto; }
+  .reveal-card-wide { position: relative; display: block; width: 100%; min-height: clamp(360px, 40vw, 480px); border-radius: 8px; overflow: hidden; background: #0f1a24; box-shadow: 0 20px 50px rgba(22,34,46,0.2); border: 0; padding: 0; text-align: left; }
+  .reveal-card-wide img { transition: transform 1.2s cubic-bezier(.22,1,.36,1), filter .6s ease; }
+  .reveal-card-wide:hover img,
+  .reveal-card-wide:focus-within img { transform: scale(1.06); filter: brightness(1.08); }
+  .reveal-card-wide::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(15,26,36,0.94) 0%, rgba(15,26,36,0.85) 42%, rgba(15,26,36,0.4) 100%); transition: background .6s ease; }
+  .reveal-card-wide:hover::before,
+  .reveal-card-wide:focus-within::before { background: linear-gradient(90deg, rgba(15,26,36,0.86) 0%, rgba(15,26,36,0.7) 42%, rgba(15,26,36,0.3) 100%); }
+  .reveal-card-wide .reveal-content-wide { position: relative; z-index: 3; display: flex; flex-direction: column; justify-content: center; padding: clamp(28px,5vw,56px); min-height: inherit; }
   .stroke-title { display: block; width: 100%; line-height: 0; }
   .stroke-title svg { display: block; width: 100%; height: auto; overflow: visible; }
   .stroke-title text { font-family: 'Poppins', sans-serif; font-weight: 600; letter-spacing: -3px; }
@@ -169,17 +170,21 @@
 
   <!-- DESCONECTAR -->
   <div id="cabana" style="max-width:1120px;margin:0 auto;padding:clamp(52px,9vw,92px) clamp(20px,5vw,32px) 0">
-    <div class="reveal-card reveal-card-wide reveal" data-reveal tabindex="0">
+    <div class="reveal-card-wide reveal" data-reveal>
       <img src="uploads/photos/photo-01.jpg" alt="Cabaña El Rincón Alpino" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:0" />
-      <div class="curtain-l"></div>
-      <div class="curtain-r"></div>
-      <div class="reveal-content reveal-content-wide">
+      <div class="reveal-content-wide">
         <div style="display:flex;align-items:baseline;gap:12px">
           <span style="width:26px;height:1px;background:rgba(217,160,91,0.6);transform:translateY(-5px)"></span>
           <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:2.2px;color:#D9A05B;text-transform:uppercase">Tu lugar para desconectar</span>
         </div>
         <h2 style="font-family:'Poppins',sans-serif;font-weight:500;font-size:clamp(30px,6vw,50px);line-height:1.06;margin:18px 0 0;max-width:22ch;text-wrap:pretty;letter-spacing:-0.3px;color:#F1F3F2">Todo lo que necesitás <em style="font-style:italic;color:#F5D19A">para disfrutar.</em></h2>
-        <p style="font-size:clamp(15px,3.6vw,17.5px);line-height:1.7;color:rgba(241,243,242,0.82);margin:20px 0 0;max-width:52ch;text-wrap:pretty">Cabaña El Rincón Alpino se encuentra en Luque – Yuquyry, a pocos minutos de la ciudad, combinando privacidad, naturaleza y todas las comodidades para una escapada diferente.</p>
+        <p style="font-size:clamp(15px,3.6vw,17.5px);line-height:1.65;color:rgba(241,243,242,0.88);margin:18px 0 0;max-width:56ch;text-wrap:pretty">Una cabaña A-frame privada en Luque – Yuquyry, con piscina tipo playa, quincho con parrilla y una vista de bosque que apaga el ruido de la ciudad. Escapadas para hasta 6 personas, a pocos minutos de Luque.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px 12px;margin-top:22px">
+          <span style="display:inline-flex;align-items:center;gap:8px;background:rgba(241,243,242,0.1);border:1px solid rgba(241,243,242,0.22);color:#F1F3F2;font-size:13px;padding:8px 13px;border-radius:999px;backdrop-filter:blur(6px)"><span style="width:6px;height:6px;border-radius:50%;background:#F5D19A"></span>Hasta 6 personas</span>
+          <span style="display:inline-flex;align-items:center;gap:8px;background:rgba(241,243,242,0.1);border:1px solid rgba(241,243,242,0.22);color:#F1F3F2;font-size:13px;padding:8px 13px;border-radius:999px;backdrop-filter:blur(6px)"><span style="width:6px;height:6px;border-radius:50%;background:#4FB3E6"></span>Piscina + Quincho</span>
+          <span style="display:inline-flex;align-items:center;gap:8px;background:rgba(241,243,242,0.1);border:1px solid rgba(241,243,242,0.22);color:#F1F3F2;font-size:13px;padding:8px 13px;border-radius:999px;backdrop-filter:blur(6px)"><span style="width:6px;height:6px;border-radius:50%;background:#40B49B"></span>Cocina equipada</span>
+          <span style="display:inline-flex;align-items:center;gap:8px;background:rgba(241,243,242,0.1);border:1px solid rgba(241,243,242,0.22);color:#F1F3F2;font-size:13px;padding:8px 13px;border-radius:999px;backdrop-filter:blur(6px)"><span style="width:6px;height:6px;border-radius:50%;background:#EB8A47"></span>Parrilla + fogata</span>
+        </div>
       </div>
     </div>
   </div>
@@ -450,7 +455,10 @@
               <span style="font-size:19px;font-weight:700">Gs. {{ depositTxt }}</span>
             </div>
           </div>
-          <button onClick="{{ goPay }}" style="width:100%;margin-top:18px;background:#2C6F7A;color:#F1F3F2;font-weight:700;font-size:16.5px;letter-spacing:0.5px;padding:19px;border:none;border-radius:14px;cursor:pointer;box-shadow:0 6px 18px rgba(217,160,91,0.35)">CONTINUAR CON LA RESERVA</button>
+          <div style="display:flex;gap:10px;margin-top:18px">
+            <button onClick="{{ goData }}" style="flex:0 0 auto;background:transparent;color:#16222E;font-weight:600;font-size:15px;letter-spacing:0.4px;padding:19px 22px;border:1px solid rgba(22,34,46,0.2);border-radius:14px;cursor:pointer">Editar</button>
+            <button onClick="{{ goPay }}" style="flex:1;background:#2C6F7A;color:#F1F3F2;font-weight:700;font-size:16.5px;letter-spacing:0.5px;padding:19px;border:none;border-radius:14px;cursor:pointer;box-shadow:0 6px 18px rgba(217,160,91,0.35)">CONTINUAR</button>
+          </div>
         </div>
         </sc-if>
 
@@ -1124,7 +1132,9 @@ class Component extends DCLogic {
       totalTxt: gs(total), depositTxt: gs(deposit),
       hasExtra: extraGuests > 0, extraTxt: extraGuests + (extraGuests === 1 ? ' persona adicional' : ' personas adicionales'),
       goData: () => this.set({ step: 'data' }),
-      name: s.name, phone: s.phone, onName: e => this.set({ name: e.target.value }), onPhone: e => this.set({ phone: e.target.value }),
+      name: s.name, phone: s.phone,
+      onName: e => this.set({ name: e.target.value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿñÑ\s'.-]/g, '') }),
+      onPhone: e => this.set({ phone: e.target.value.replace(/[^\d\s+()-]/g, '') }),
       dataIncomplete: !(s.name.trim().length > 2 && s.phone.trim().length > 6),
       contBg: (s.name.trim().length > 2 && s.phone.trim().length > 6) ? '#2C6F7A' : 'rgba(22,34,46,0.12)',
       contFg: (s.name.trim().length > 2 && s.phone.trim().length > 6) ? '#F1F3F2' : 'rgba(22,34,46,0.4)',
