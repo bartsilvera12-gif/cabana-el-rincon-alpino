@@ -11,43 +11,43 @@ Sitio de reservas de la Cabaña El Rincón Alpino en Luque – Yuquyry.
 
 Vercel sirve `index.html` en la raíz automáticamente.
 
-## Deploy en Hostinger
+## Deploy en Hostinger (conectando este repo por Git)
 
-Como es un sitio 100% estático (HTML + JS + CSS + fotos), va en cualquier
-plan de Hostinger. Dos opciones:
+Como el sitio es 100% estático, Hostinger lo puede clonar directo desde
+GitHub y desplegarlo automáticamente en cada `push` a `main`.
 
-### Opción A — subir por File Manager (más rápido)
+### Setup inicial (una sola vez)
 
-1. En hPanel → **Archivos → Administrador de archivos**
-2. Entrar en `public_html/` y vaciarla si tiene algo (el `default.php` que
-   viene por defecto).
-3. Subir `hostinger-deploy.zip` (está en la raíz de este repo).
-4. Click derecho sobre el zip → **Extraer** → destino `public_html/`.
-5. Borrar el zip después de extraerlo.
+1. hPanel → tu sitio → **Avanzado → GIT**.
+2. **Create Repository** con:
+   - **Repository URL**: `https://github.com/bartsilvera12-gif/cabana-el-rincon-alpino.git`
+   - **Branch**: `main`
+   - **Install Path**: `public_html` (dejalo vacío o poné `.`)
+3. **Create** → Hostinger hace el primer clone en `public_html/`.
+4. En la misma pantalla, copiar el **Webhook URL** que aparece.
 
-### Opción B — subir por FTP
+### Auto-deploy en cada push
 
-Credenciales: hPanel → **Archivos → Cuentas FTP**. Con FileZilla o
-WinSCP, subir estos archivos/carpetas al `public_html/`:
+1. En GitHub abrir el repo → **Settings → Webhooks → Add webhook**.
+2. **Payload URL**: pegar el webhook que dio Hostinger.
+3. **Content type**: `application/json`.
+4. **Which events?**: *Just the push event*.
+5. **Active** ✓ → **Add webhook**.
 
-- `index.html`
-- `support.js`
-- `favicon.png`
-- `.htaccess`  (habilita HTTPS, gzip y cache; asegurate de mostrar archivos ocultos)
-- `uploads/`   (logo + fotos)
+Desde ahí, cada `git push origin main` tira un webhook a Hostinger que
+hace `git pull` en `public_html/` y el sitio actualiza solo.
 
-### Después de subir
+### Después del primer deploy
 
-1. Probar el sitio en `https://tudominio.com`.
-2. HTTPS: en hPanel → **Avanzado → SSL** — instalar el certificado gratuito
-   si no lo tenés (el `.htaccess` fuerza HTTPS igual).
-3. El link "Admin" en el footer entra al panel; email/pass son los del
-   usuario que agregaste a `admins` en Supabase.
+1. hPanel → **Avanzado → SSL** → instalar Let's Encrypt gratis.
+2. Probar `https://tudominio.com` — el `.htaccess` fuerza HTTPS y
+   activa gzip + cache de assets.
+3. Link "Admin" en el footer → login con el email/pass del usuario
+   en la tabla `admins` de Supabase.
 
-### Actualizaciones
+### Deploy manual (sin webhook)
 
-Cada vez que cambie el HTML/JS/fotos, reemplazar los archivos por FTP o
-subir un zip nuevo y volver a extraer.
+En hPanel → **Avanzado → GIT** → botón **Deploy** (pull manual).
 
 ## Base de datos (Supabase)
 
