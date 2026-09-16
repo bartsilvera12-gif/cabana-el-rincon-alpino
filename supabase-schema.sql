@@ -1,6 +1,6 @@
 -- =========================================================================
 -- Cabaña El Rincón Alpino — schema para Supabase
--- Corré esto en el SQL Editor de tu proyecto (una sola vez).
+-- Es idempotente: podés correrlo varias veces sin errores.
 -- =========================================================================
 
 -- ----- Tablas ----------------------------------------------------------
@@ -59,10 +59,6 @@ create table if not exists admins (
   user_id uuid primary key references auth.users(id) on delete cascade,
   created_at timestamptz not null default now()
 );
-alter table admins enable row level security;
-create policy "admins self read"
-  on admins for select to authenticated
-  using (auth.uid() = user_id);
 
 -- Helper: verifica si el auth.uid() actual está en admins.
 create or replace function public.is_admin() returns boolean
@@ -77,6 +73,23 @@ alter table reservations   enable row level security;
 alter table blocked_dates  enable row level security;
 alter table config         enable row level security;
 alter table gallery        enable row level security;
+alter table admins         enable row level security;
+
+drop policy if exists "admins self read"           on admins;
+drop policy if exists "reservations public read"   on reservations;
+drop policy if exists "blocked_dates public read"  on blocked_dates;
+drop policy if exists "config public read"         on config;
+drop policy if exists "gallery public read"        on gallery;
+drop policy if exists "reservations public insert" on reservations;
+drop policy if exists "reservations admin update"  on reservations;
+drop policy if exists "reservations admin delete"  on reservations;
+drop policy if exists "blocked_dates admin write"  on blocked_dates;
+drop policy if exists "config admin update"        on config;
+drop policy if exists "gallery admin write"        on gallery;
+
+create policy "admins self read"
+  on admins for select to authenticated
+  using (auth.uid() = user_id);
 
 -- Lectura pública (necesaria para el sitio)
 create policy "reservations public read"
@@ -118,17 +131,23 @@ insert into storage.buckets (id, name, public)
 values ('gallery-photos', 'gallery-photos', true)
 on conflict (id) do nothing;
 
+drop policy if exists "gallery photos public read"  on storage.objects;
+drop policy if exists "gallery photos admin write"  on storage.objects;
+drop policy if exists "gallery photos admin update" on storage.objects;
+drop policy if exists "gallery photos admin delete" on storage.objects;
+
 create policy "gallery photos public read"
-  on storage.objects for select using (bucket_id = 'gallery-photos');
+  on storage.objects for select
+  using (bucket_id = 'gallery-photos');
 create policy "gallery photos admin write"
   on storage.objects for insert to authenticated
-  with check (bucket_id = 'gallery-photos');
+  with check (bucket_id = 'gallery-photos' and public.is_admin());
 create policy "gallery photos admin update"
   on storage.objects for update to authenticated
-  using (bucket_id = 'gallery-photos');
+  using (bucket_id = 'gallery-photos' and public.is_admin());
 create policy "gallery photos admin delete"
   on storage.objects for delete to authenticated
-  using (bucket_id = 'gallery-photos');
+  using (bucket_id = 'gallery-photos' and public.is_admin());
 
 -- ----- Admin autorizado ------------------------------------------------
 -- Solo este user_id puede entrar al panel y modificar datos.
