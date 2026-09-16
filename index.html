@@ -79,6 +79,9 @@
   }
   @media (max-width: 640px) {
     [data-cal-day] { min-height: 38px !important; font-size: 13px !important; border-radius: 9px !important; }
+    [data-thumbs] { overflow-x: visible !important; }
+    [data-thumbs-track] { flex-wrap: wrap !important; width: 100% !important; height: auto !important; gap: 6px !important; justify-content: flex-start !important; }
+    [data-thumbs-track] > [data-thumb] { flex: 0 0 calc((100% - 30px) / 6) !important; height: 48px !important; width: auto !important; margin: 0 !important; }
     .hero-card { aspect-ratio: auto !important; min-height: 520px !important; }
     .hero-title-wrap { max-width: calc(100% - clamp(48px,10vw,80px)) !important; top: auto !important; bottom: clamp(24px,4vw,44px) !important; transform: none !important; }
     .hero-desc { display: none !important; }
@@ -239,10 +242,10 @@
         <div style="position:absolute;top:14px;right:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:1.2px;color:#E3E9E8;background:rgba(22,34,46,0.7);padding:6px 10px;border-radius:999px;z-index:5">{{ galleryCounter }}</div>
       </div>
 
-      <div ref="{{ thumbsRef }}" data-scroll="1" style="overflow-x:auto;margin-top:10px">
-        <div style="display:flex;gap:4px;height:74px;width:fit-content;padding:2px 0">
+      <div ref="{{ thumbsRef }}" data-thumbs data-scroll="1" style="overflow-x:auto;margin-top:10px">
+        <div data-thumbs-track style="display:flex;gap:4px;height:74px;width:fit-content;padding:2px 0">
           <sc-for list="{{ galleryPhotos }}" as="p" hint-placeholder-count="6">
-            <button onClick="{{ p.onClick }}" aria-label="{{ p.label }}" style="position:relative;flex:none;height:100%;width:{{ p.w }};margin-left:{{ p.mx }};margin-right:{{ p.mx }};border:{{ p.ring }};border-radius:10px;overflow:hidden;padding:0;cursor:pointer;background:#0f1a24;transition:width .3s ease,margin .3s ease,border-color .3s ease">
+            <button data-thumb onClick="{{ p.onClick }}" aria-label="{{ p.label }}" style="position:relative;flex:none;height:100%;width:{{ p.w }};margin-left:{{ p.mx }};margin-right:{{ p.mx }};border:{{ p.ring }};border-radius:10px;overflow:hidden;padding:0;cursor:pointer;background:#0f1a24;transition:width .3s ease,margin .3s ease,border-color .3s ease">
               <img src="{{ p.src }}" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block" />
               <span style="position:absolute;inset:0;background:#F1F3F2;opacity:{{ p.dim }};transition:opacity .3s ease;pointer-events:none"></span>
             </button>
