@@ -768,24 +768,14 @@
       </div>
       </sc-if>
 
-      <!-- AJUSTES -->
-      <sc-if value="{{ tabCfg }}" hint-placeholder-val="{{ false }}">
+      <!-- GALERÍA -->
+      <sc-if value="{{ tabGal }}" hint-placeholder-val="{{ false }}">
       <div>
-        <h2 style="font-family:'Poppins',sans-serif;font-size:26px;font-weight:600;margin:0">Configuración</h2>
-        <div style="font-size:13.5px;color:rgba(22,34,46,0.72);margin-top:6px">Estos valores alimentan el sitio y el cálculo de precios.</div>
-        <div style="background:#F1F3F2;border:1px solid rgba(22,34,46,0.1);border-radius:18px;padding:18px;margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px">
-          <sc-for list="{{ settingsFields }}" as="f" hint-placeholder-count="8">
-            <div>
-              <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">{{ f.label }}</label>
-              <input value="{{ f.value }}" onChange="{{ f.onChange }}" style="width:100%;padding:14px;font-size:15px;border:1px solid rgba(22,34,46,0.18);border-radius:11px;background:#F1F3F2;outline:none" />
-            </div>
-          </sc-for>
-        </div>
-        <div style="background:#F1F3F2;border:1px solid rgba(22,34,46,0.1);border-radius:18px;padding:18px;margin-top:14px">
+        <div style="background:#F1F3F2;border:1px solid rgba(22,34,46,0.1);border-radius:18px;padding:18px">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
             <div>
-              <div style="font-size:15px;font-weight:500">Galería</div>
-              <div style="font-size:13px;color:rgba(22,34,46,0.72);margin-top:4px">Subir fotos, cambiar categoría, reordenar o eliminar. {{ adminPhotosCount }}.</div>
+              <h2 style="font-family:'Poppins',sans-serif;font-size:26px;font-weight:600;margin:0">Galería</h2>
+              <div style="font-size:13.5px;color:rgba(22,34,46,0.72);margin-top:6px">Subir fotos, cambiar categoría, reordenar o eliminar. {{ adminPhotosCount }}.</div>
             </div>
             <label style="display:inline-flex;align-items:center;gap:8px;background:#2C6F7A;color:#F1F3F2;font-weight:700;font-size:13.5px;padding:12px 18px;border-radius:11px;cursor:pointer">
               <span>Subir fotos</span>
@@ -817,6 +807,25 @@
           <sc-if value="{{ noAdminPhotos }}" hint-placeholder-val="{{ false }}">
             <div style="margin-top:16px;padding:24px;text-align:center;background:#FFF;border:1.5px dashed rgba(22,34,46,0.2);border-radius:12px;color:rgba(22,34,46,0.6);font-size:13.5px">Todavía no subiste ninguna foto. Tocá "Subir fotos" arriba.</div>
           </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- AJUSTES -->
+      <sc-if value="{{ tabCfg }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <h2 style="font-family:'Poppins',sans-serif;font-size:26px;font-weight:600;margin:0">Configuración</h2>
+        <div style="font-size:13.5px;color:rgba(22,34,46,0.72);margin-top:6px">Estos valores alimentan el sitio y el cálculo de precios.</div>
+        <div style="background:#F1F3F2;border:1px solid rgba(22,34,46,0.1);border-radius:18px;padding:18px;margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px">
+          <sc-for list="{{ settingsFields }}" as="f" hint-placeholder-count="8">
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">{{ f.label }}</label>
+              <input value="{{ f.value }}" onChange="{{ f.onChange }}" style="width:100%;padding:14px;font-size:15px;border:1px solid rgba(22,34,46,0.18);border-radius:11px;background:#F1F3F2;outline:none" />
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#F1F3F2;border:1px solid rgba(22,34,46,0.1);border-radius:18px;padding:18px;margin-top:14px">
+          <div style="font-size:14px;color:rgba(22,34,46,0.72)">La galería se administra desde la pestaña <strong>Galería</strong> ↑</div>
         </div>
       </div>
       </sc-if>
@@ -1223,11 +1232,11 @@ class Component extends DCLogic {
         this.set({ loggedIn: true, loginError: '', adminPass: '' });
         this.hydrateAll && this.hydrateAll();
       },
-      adminTabs: [['res', 'Reservas'], ['cal', 'Calendario'], ['cfg', 'Configuración']].map(([id, label]) => ({
+      adminTabs: [['res', 'Reservas'], ['cal', 'Calendario'], ['gal', 'Galería'], ['cfg', 'Configuración']].map(([id, label]) => ({
         label, onClick: () => this.set({ adminTab: id }),
         bg: s.adminTab === id ? '#E6EAE9' : 'rgba(227,233,232,0.12)', fg: s.adminTab === id ? '#16222E' : 'rgba(227,233,232,0.8)'
       })),
-      tabRes: s.adminTab === 'res', tabCal: s.adminTab === 'cal', tabCfg: s.adminTab === 'cfg',
+      tabRes: s.adminTab === 'res', tabCal: s.adminTab === 'cal', tabGal: s.adminTab === 'gal', tabCfg: s.adminTab === 'cfg',
 
       amenities: [
         { label: 'Piscina tipo playa', icon: 'M2 6c.6.5 1.2 1 2.5 1s2-1 3-1 2 1 3 1 2-1 3-1 2 1 3 1 2-1 3-1 1.9.5 2.5 1M2 12c.6.5 1.2 1 2.5 1s2-1 3-1 2 1 3 1 2-1 3-1 2 1 3 1 2-1 3-1 1.9.5 2.5 1M2 18c.6.5 1.2 1 2.5 1s2-1 3-1 2 1 3 1 2-1 3-1 2 1 3 1 2-1 3-1 1.9.5 2.5 1' },
