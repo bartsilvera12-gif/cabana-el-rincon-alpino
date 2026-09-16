@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  // === Supabase client ===
+  window.__SUPABASE_URL = 'https://api.neura.com.py';
+  window.__SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzc0MTAxNDYxLCJleHAiOjE5MzE3ODE0NjF9.7_wAph8IolPMXtgfpezSwS5XR62IdD__qhqCywLDp3Q';
+  (function ready() {
+    if (!window.supabase) return setTimeout(ready, 50);
+    window.__supa = window.supabase.createClient(window.__SUPABASE_URL, window.__SUPABASE_ANON, { auth: { persistSession: true, autoRefreshToken: true } });
+  })();
+</script>
 </head>
 <body>
 <x-dc>
@@ -772,19 +782,41 @@
           </sc-for>
         </div>
         <div style="background:#F1F3F2;border:1px solid rgba(22,34,46,0.1);border-radius:18px;padding:18px;margin-top:14px">
-          <div style="font-size:15px;font-weight:500">Galería</div>
-          <div style="font-size:13px;color:rgba(22,34,46,0.72);margin-top:4px">Subir, eliminar, reordenar y definir foto principal.</div>
-          <div style="display:flex;gap:10px;overflow-x:auto;margin-top:14px;padding-bottom:4px" data-scroll="1">
-            <sc-for list="{{ adminPhotos }}" as="p" hint-placeholder-count="4">
-              <div style="flex:none;width:108px">
-                <div style="aspect-ratio:1/1;border-radius:12px;background:repeating-linear-gradient(115deg,#2C4456 0 12px,#27404F 12px 24px);position:relative">
-                  <span style="position:absolute;top:6px;left:6px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#E3E9E8;background:rgba(22,34,46,0.68);padding:3px 5px;border-radius:5px">{{ p.tag }}</span>
-                </div>
-                <div style="font-size:11.5px;color:rgba(22,34,46,0.72);margin-top:6px">{{ p.label }}</div>
-              </div>
-            </sc-for>
-            <div style="flex:none;width:108px;aspect-ratio:1/1;border-radius:12px;border:1.5px dashed rgba(22,34,46,0.25);display:flex;align-items:center;justify-content:center;font-size:26px;color:rgba(22,34,46,0.35)">+</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:15px;font-weight:500">Galería</div>
+              <div style="font-size:13px;color:rgba(22,34,46,0.72);margin-top:4px">Subir fotos, cambiar categoría, reordenar o eliminar. {{ adminPhotosCount }}.</div>
+            </div>
+            <label style="display:inline-flex;align-items:center;gap:8px;background:#2C6F7A;color:#F1F3F2;font-weight:700;font-size:13.5px;padding:12px 18px;border-radius:11px;cursor:pointer">
+              <span>Subir fotos</span>
+              <input type="file" accept="image/*" multiple onChange="{{ onUploadPhotos }}" style="display:none" />
+            </label>
           </div>
+          <sc-if value="{{ uploadingPhotos }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:12px;padding:10px 14px;background:rgba(31,90,99,0.1);border:1px solid rgba(31,90,99,0.3);color:#1F5A63;font-size:13px;border-radius:11px">Subiendo… {{ uploadProgress }}</div>
+          </sc-if>
+          <sc-if value="{{ hasAdminPhotos }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:16px">
+              <sc-for list="{{ adminPhotos }}" as="p" hint-placeholder-count="4">
+                <div style="background:#FFF;border:1px solid rgba(22,34,46,0.1);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px">
+                  <div style="position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#0f1a24">
+                    <img src="{{ p.src }}" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" />
+                  </div>
+                  <select value="{{ p.cat }}" onChange="{{ p.onChangeCat }}" style="width:100%;padding:8px;font-size:12.5px;border:1px solid rgba(22,34,46,0.18);border-radius:8px;background:#F1F3F2">
+                    <option>Cabaña</option><option>Piscina</option><option>Quincho</option><option>Interior</option><option>Cocina</option>
+                  </select>
+                  <div style="display:flex;gap:6px">
+                    <button onClick="{{ p.moveUp }}" title="Subir" style="flex:1;background:#E3E9E8;border:none;border-radius:8px;font-size:14px;padding:8px;cursor:pointer">↑</button>
+                    <button onClick="{{ p.moveDown }}" title="Bajar" style="flex:1;background:#E3E9E8;border:none;border-radius:8px;font-size:14px;padding:8px;cursor:pointer">↓</button>
+                    <button onClick="{{ p.remove }}" title="Eliminar" style="flex:1;background:rgba(155,59,43,0.14);border:none;border-radius:8px;font-size:14px;padding:8px;cursor:pointer;color:#9B3B2B">🗑</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noAdminPhotos }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:16px;padding:24px;text-align:center;background:#FFF;border:1.5px dashed rgba(22,34,46,0.2);border-radius:12px;color:rgba(22,34,46,0.6);font-size:13.5px">Todavía no subiste ninguna foto. Tocá "Subir fotos" arriba.</div>
+          </sc-if>
         </div>
       </div>
       </sc-if>
@@ -900,12 +932,75 @@ class Component extends DCLogic {
       { code: 'RA-00122', name: 'Lorena Ayala', phone: '0981 447 219', ci: '2026-09-25', co: '2026-09-26', guests: 4, total: 650000, status: 'PENDIENTE', created: 'hoy 11:42' },
       { code: 'RA-00121', name: 'Diego Ferreira', phone: '0972 118 604', ci: '2026-09-19', co: '2026-09-21', guests: 6, total: 1300000, status: 'CONFIRMADA', created: 'ayer 19:05' }
     ],
-    nextCode: 124
+    nextCode: 124,
+    dbGallery: null
   };
 
   today = new Date(2026, 8, 15);
   thumbsRef = React.createRef();
   touchX = 0;
+
+  componentDidMount() {
+    this.hydrateAll();
+    this.checkSession();
+  }
+  async checkSession() {
+    if (!window.__supa) return setTimeout(() => this.checkSession(), 120);
+    const { data } = await window.__supa.auth.getSession();
+    if (data && data.session) this.setState({ loggedIn: true });
+  }
+  async hydrateAll() {
+    if (!window.__supa) return setTimeout(() => this.hydrateAll(), 120);
+    const supa = window.__supa;
+    const [cfgR, resR, blkR, galR] = await Promise.all([
+      supa.from('config').select('*').eq('id', 1).maybeSingle(),
+      supa.from('reservations').select('*').order('created_at', { ascending: false }),
+      supa.from('blocked_dates').select('*'),
+      supa.from('gallery').select('*').order('sort_order', { ascending: true })
+    ]);
+    const patch = {};
+    if (cfgR && cfgR.data) {
+      patch.cfg = {
+        weekday: Number(cfgR.data.price_weekday),
+        weekend: Number(cfgR.data.price_weekend),
+        extra: Number(cfgR.data.price_extra_person),
+        maxGuests: Number(cfgR.data.max_guests),
+        depositPct: Number(cfgR.data.deposit_pct),
+        alias: cfgR.data.alias,
+        wa: cfgR.data.whatsapp,
+        hold: this.state.cfg.hold,
+        checkIn: cfgR.data.check_in_time,
+        checkOut: cfgR.data.check_out_time
+      };
+    }
+    const dates = {};
+    const rsvs = (resR && resR.data) ? resR.data : [];
+    rsvs.forEach(r => {
+      if (r.status !== 'PENDIENTE' && r.status !== 'CONFIRMADA') return;
+      const st = r.status === 'CONFIRMADA' ? 'confirmed' : 'pending';
+      const start = new Date(r.check_in + 'T00:00:00');
+      const end = new Date(r.check_out + 'T00:00:00');
+      for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+        dates[d.toISOString().slice(0, 10)] = st;
+      }
+    });
+    ((blkR && blkR.data) || []).forEach(b => { dates[b.date] = 'blocked'; });
+    patch.dates = dates;
+    patch.reservations = rsvs.map(r => ({
+      code: r.code, name: r.name, phone: r.phone,
+      ci: r.check_in, co: r.check_out, guests: Number(r.guests), total: Number(r.total),
+      status: r.status, created: new Date(r.created_at).toLocaleString('es-PY', { dateStyle: 'short', timeStyle: 'short' })
+    }));
+    if (galR && galR.data) patch.dbGallery = galR.data;
+    this.setState(prev => Object.assign({}, prev, patch));
+  }
+  photoPublicUrl(path) {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    if (!window.__supa) return '';
+    const { data } = window.__supa.storage.from('gallery-photos').getPublicUrl(path);
+    return data && data.publicUrl || '';
+  }
 
   centerThumb(i) {
     const el = this.thumbsRef.current;
@@ -922,7 +1017,16 @@ class Component extends DCLogic {
   }
 
   set(p) { this.setState(p); }
-  cfgSet(k, v) { this.setState(s => ({ cfg: Object.assign({}, s.cfg, { [k]: v }) })); }
+  cfgSet(k, v) {
+    this.setState(s => ({ cfg: Object.assign({}, s.cfg, { [k]: v }) }));
+    if (!window.__supa) return;
+    const map = { weekday: 'price_weekday', weekend: 'price_weekend', extra: 'price_extra_person', maxGuests: 'max_guests', depositPct: 'deposit_pct', alias: 'alias', wa: 'whatsapp', checkIn: 'check_in_time', checkOut: 'check_out_time' };
+    const col = map[k]; if (!col) return;
+    clearTimeout(this._cfgTimer);
+    this._cfgTimer = setTimeout(() => {
+      window.__supa.from('config').update({ [col]: v }).eq('id', 1);
+    }, 500);
+  }
 
   nightKeys() {
     const { checkIn, checkOut } = this.state;
@@ -1001,11 +1105,18 @@ class Component extends DCLogic {
       if (!k) return this.blankCell();
       const st = this.statusOf(k);
       const num = fromKey(k).getDate();
-      const toggle = () => this.setState(st2 => {
-        const d = Object.assign({}, st2.dates);
-        if (d[k] === 'blocked') delete d[k]; else if (!d[k]) d[k] = 'blocked';
-        return { dates: d };
-      });
+      const toggle = async () => {
+        const cur = this.state.dates[k];
+        this.setState(st2 => {
+          const d = Object.assign({}, st2.dates);
+          if (d[k] === 'blocked') delete d[k]; else if (!d[k]) d[k] = 'blocked';
+          return { dates: d };
+        });
+        if (window.__supa) {
+          if (cur === 'blocked') await window.__supa.from('blocked_dates').delete().eq('date', k);
+          else if (!cur) await window.__supa.from('blocked_dates').upsert({ date: k, reason: 'manual' });
+        }
+      };
       if (st === 'past') return { num, bg: 'transparent', fg: 'rgba(22,34,46,0.22)', border: 'transparent', cursor: 'default', onClick: null };
       if (st === 'confirmed') return { num, bg: '#2C4456', fg: '#F1F3F2', border: 'transparent', cursor: 'pointer', onClick: toggle };
       if (st === 'pending') return { num, bg: '#F0DDB4', fg: '#6B4B1E', border: 'transparent', cursor: 'pointer', onClick: toggle };
@@ -1025,11 +1136,14 @@ class Component extends DCLogic {
       11: 'Quincho', 12: 'Quincho', 13: 'Cocina', 14: 'Interior', 15: 'Cocina',
       16: 'Interior', 17: 'Interior', 18: 'Interior', 19: 'Cabaña', 20: 'Interior'
     };
-    const allPhotos = Array.from({ length: 20 }, (_, i) => {
+    const localFallback = Array.from({ length: 20 }, (_, i) => {
       const idx = i + 1;
       const n = String(idx).padStart(2, '0');
-      return { label: `El Rincón Alpino — foto ${n}`, cat: photoCats[idx], src: `uploads/photos/photo-${n}.jpg` };
+      return { id: 'local-' + n, label: `El Rincón Alpino — foto ${n}`, cat: photoCats[idx], src: `uploads/photos/photo-${n}.jpg` };
     });
+    const allPhotos = (s.dbGallery && s.dbGallery.length)
+      ? s.dbGallery.map(g => ({ id: g.id, label: g.title || 'El Rincón Alpino', cat: g.category, src: this.photoPublicUrl(g.path), path: g.path, sort: g.sort_order }))
+      : localFallback;
 
     const galleryList = allPhotos.filter(p => s.gallery === 'Todo' || p.cat === s.gallery);
     const gi = Math.min(s.gi || 0, Math.max(0, galleryList.length - 1));
@@ -1039,16 +1153,22 @@ class Component extends DCLogic {
       : st === 'VENCIDA' ? { badgeBg: '#DCDFDE', badgeFg: 'rgba(22,34,46,0.72)' }
       : { badgeBg: '#F0DDB4', badgeFg: '#6B4B1E' };
 
-    const decide = (code, next) => this.setState(st => {
-      const rs = st.reservations.map(r => r.code === code ? Object.assign({}, r, { status: next }) : r);
-      const target = st.reservations.find(r => r.code === code);
-      const d = Object.assign({}, st.dates);
-      if (target) {
-        const cur = fromKey(target.ci), end = fromKey(target.co);
-        while (cur < end) { const kk = key(cur.getFullYear(), cur.getMonth(), cur.getDate()); if (next === 'CONFIRMADA') d[kk] = 'confirmed'; else delete d[kk]; cur.setDate(cur.getDate() + 1); }
+    const decide = async (code, next) => {
+      this.setState(st => {
+        const rs = st.reservations.map(r => r.code === code ? Object.assign({}, r, { status: next }) : r);
+        const target = st.reservations.find(r => r.code === code);
+        const d = Object.assign({}, st.dates);
+        if (target) {
+          const cur = fromKey(target.ci), end = fromKey(target.co);
+          while (cur < end) { const kk = key(cur.getFullYear(), cur.getMonth(), cur.getDate()); if (next === 'CONFIRMADA') d[kk] = 'confirmed'; else delete d[kk]; cur.setDate(cur.getDate() + 1); }
+        }
+        return { reservations: rs, dates: d };
+      });
+      if (window.__supa) {
+        await window.__supa.from('reservations').update({ status: next }).eq('code', code);
+        setTimeout(() => this.hydrateAll(), 300);
       }
-      return { reservations: rs, dates: d };
-    });
+    };
 
     const setCfgNum = k => e => this.cfgSet(k, Number(String(e.target.value).replace(/\D/g, '')) || 0);
     const setCfgStr = k => e => this.cfgSet(k, e.target.value);
@@ -1063,15 +1183,20 @@ class Component extends DCLogic {
       privacyOpen: !!s.privacyOpen,
       openPrivacy: () => this.set({ privacyOpen: true }),
       closePrivacy: () => this.set({ privacyOpen: false }),
-      openAdmin: () => this.set({ view: 'admin', menuOpen: false }), closeAdmin: () => this.set({ view: 'site', loggedIn: false }),
+      openAdmin: () => this.set({ view: 'admin', menuOpen: false }),
+      closeAdmin: async () => { if (window.__supa) await window.__supa.auth.signOut(); this.set({ view: 'site', loggedIn: false }); },
       adminUser: s.adminUser, adminPass: s.adminPass,
       onAdminUser: e => this.set({ adminUser: e.target.value }), onAdminPass: e => this.set({ adminPass: e.target.value }),
       loginError: s.loginError,
-      doLogin: () => {
-        var u = (s.adminUser || '').trim().toLowerCase();
-        var p = s.adminPass || '';
-        if (u === 'admin' && p === 'alpino2026') this.set({ loggedIn: true, loginError: '', adminPass: '' });
-        else this.set({ loginError: 'Usuario o contraseña incorrectos.' });
+      doLogin: async () => {
+        var email = (s.adminUser || '').trim();
+        var pass = s.adminPass || '';
+        if (!window.__supa) { this.set({ loginError: 'Conectando... probá otra vez.' }); return; }
+        this.set({ loginError: '' });
+        var { data, error } = await window.__supa.auth.signInWithPassword({ email: email, password: pass });
+        if (error) { this.set({ loginError: error.message || 'Usuario o contraseña incorrectos.' }); return; }
+        this.set({ loggedIn: true, loginError: '', adminPass: '' });
+        this.hydrateAll && this.hydrateAll();
       },
       adminTabs: [['res', 'Reservas'], ['cal', 'Calendario'], ['cfg', 'Configuración']].map(([id, label]) => ({
         label, onClick: () => this.set({ adminTab: id }),
@@ -1159,7 +1284,7 @@ class Component extends DCLogic {
         { k: 'Noches', v: String(nights) }, { k: 'Personas', v: String(s.guests) },
         { k: 'A nombre de', v: s.name || '—' }
       ],
-      goPay: () => {
+      goPay: async () => {
         const code = 'RA-' + String(s.nextCode).padStart(5, '0');
         this.setState(st => {
           const d = Object.assign({}, st.dates);
@@ -1167,6 +1292,13 @@ class Component extends DCLogic {
           const res = { code, name: st.name || 'Huésped web', phone: st.phone || '—', ci: st.checkIn, co: coKey, guests: st.guests, total, status: 'PENDIENTE', created: 'ahora' };
           return { step: 'pay', code, dates: d, reservations: [res].concat(st.reservations), nextCode: st.nextCode + 1 };
         });
+        if (window.__supa) {
+          await window.__supa.from('reservations').insert({
+            code: code, name: s.name || 'Huésped web', phone: s.phone || '—',
+            check_in: s.checkIn, check_out: coKey, guests: s.guests, total: total, status: 'PENDIENTE'
+          });
+          setTimeout(() => this.hydrateAll(), 500);
+        }
       },
       code: s.code || 'RA-00124',
       aliasBtn: s.aliasCopied ? '✓ ALIAS COPIADO' : 'COPIAR ALIAS',
@@ -1198,11 +1330,70 @@ class Component extends DCLogic {
         { label: 'Horario de check-in', value: c.checkIn, onChange: setCfgStr('checkIn') },
         { label: 'Horario de check-out', value: c.checkOut, onChange: setCfgStr('checkOut') }
       ],
-      adminPhotos: [
-        { tag: 'PRINCIPAL', label: 'Cabaña + piscina' }, { tag: '02', label: 'Piscina' },
-        { tag: '03', label: 'Quincho' }, { tag: '04', label: 'Interior' }
-      ]
+      uploadingPhotos: !!s.uploadingPhotos,
+      uploadProgress: s.uploadProgress || '',
+      onUploadPhotos: e => this.uploadPhotos(e.target.files),
+      hasAdminPhotos: !!(s.dbGallery && s.dbGallery.length),
+      noAdminPhotos: !!(s.dbGallery && s.dbGallery.length === 0),
+      adminPhotosCount: s.dbGallery ? (s.dbGallery.length + (s.dbGallery.length === 1 ? ' foto' : ' fotos')) : 'Cargando…',
+      adminPhotos: (s.dbGallery || []).map((g, i, arr) => ({
+        id: g.id,
+        src: this.photoPublicUrl(g.path),
+        cat: g.category,
+        onChangeCat: e => this.updatePhotoCategory(g.id, e.target.value),
+        moveUp: () => this.reorderPhoto(g.id, -1),
+        moveDown: () => this.reorderPhoto(g.id, +1),
+        remove: () => this.removePhoto(g.id, g.path)
+      }))
     };
+  }
+
+  async uploadPhotos(files) {
+    if (!files || !files.length || !window.__supa) return;
+    this.setState({ uploadingPhotos: true, uploadProgress: '0 / ' + files.length });
+    const supa = window.__supa;
+    const maxSort = (this.state.dbGallery || []).reduce((m, g) => Math.max(m, g.sort_order || 0), 0);
+    let done = 0;
+    for (const f of files) {
+      const ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = 'photo-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      const up = await supa.storage.from('gallery-photos').upload(path, f, { cacheControl: '3600', upsert: false });
+      if (!up.error) {
+        await supa.from('gallery').insert({ path: path, category: 'Cabaña', sort_order: maxSort + done + 1 });
+      }
+      done++;
+      this.setState({ uploadProgress: done + ' / ' + files.length });
+    }
+    this.setState({ uploadingPhotos: false, uploadProgress: '' });
+    this.hydrateAll();
+  }
+  async updatePhotoCategory(id, cat) {
+    this.setState(s => ({ dbGallery: (s.dbGallery || []).map(g => g.id === id ? Object.assign({}, g, { category: cat }) : g) }));
+    if (window.__supa) await window.__supa.from('gallery').update({ category: cat }).eq('id', id);
+  }
+  async reorderPhoto(id, dir) {
+    const list = (this.state.dbGallery || []).slice();
+    const i = list.findIndex(g => g.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    const a = list[i], b = list[j];
+    list[i] = b; list[j] = a;
+    list.forEach((g, k) => g.sort_order = k + 1);
+    this.setState({ dbGallery: list });
+    if (window.__supa) {
+      await Promise.all([
+        window.__supa.from('gallery').update({ sort_order: b.sort_order }).eq('id', b.id),
+        window.__supa.from('gallery').update({ sort_order: a.sort_order }).eq('id', a.id)
+      ]);
+    }
+  }
+  async removePhoto(id, path) {
+    if (!confirm('¿Eliminar esta foto?')) return;
+    this.setState(s => ({ dbGallery: (s.dbGallery || []).filter(g => g.id !== id) }));
+    if (window.__supa) {
+      await window.__supa.storage.from('gallery-photos').remove([path]);
+      await window.__supa.from('gallery').delete().eq('id', id);
+    }
   }
 }
 </script>
