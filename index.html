@@ -943,6 +943,15 @@ class Component extends DCLogic {
   componentDidMount() {
     this.hydrateAll();
     this.checkSession();
+    if (typeof location !== 'undefined' && (location.pathname === '/admin' || location.hash === '#admin' || location.hash === '#/admin')) {
+      this.setState({ view: 'admin', menuOpen: false });
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('popstate', () => {
+        var isAdmin = location.pathname === '/admin' || location.hash === '#admin' || location.hash === '#/admin';
+        this.setState({ view: isAdmin ? 'admin' : 'site' });
+      });
+    }
   }
   async checkSession() {
     if (!window.__supa) return setTimeout(() => this.checkSession(), 120);
@@ -1186,8 +1195,15 @@ class Component extends DCLogic {
       privacyOpen: !!s.privacyOpen,
       openPrivacy: () => this.set({ privacyOpen: true }),
       closePrivacy: () => this.set({ privacyOpen: false }),
-      openAdmin: () => this.set({ view: 'admin', menuOpen: false }),
-      closeAdmin: async () => { if (window.__supa) await window.__supa.auth.signOut(); this.set({ view: 'site', loggedIn: false }); },
+      openAdmin: () => {
+        try { history.pushState({}, '', '/admin'); } catch (e) { location.hash = 'admin'; }
+        this.set({ view: 'admin', menuOpen: false });
+      },
+      closeAdmin: async () => {
+        if (window.__supa) await window.__supa.auth.signOut();
+        try { history.pushState({}, '', '/'); } catch (e) { location.hash = ''; }
+        this.set({ view: 'site', loggedIn: false });
+      },
       adminUser: s.adminUser, adminPass: s.adminPass,
       onAdminUser: e => this.set({ adminUser: e.target.value }), onAdminPass: e => this.set({ adminPass: e.target.value }),
       loginError: s.loginError,
