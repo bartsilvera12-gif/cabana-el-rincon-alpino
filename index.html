@@ -1018,6 +1018,7 @@ class Component extends DCLogic {
   photoPublicUrl(path) {
     if (!path) return '';
     if (path.startsWith('http')) return path;
+    if (path.startsWith('uploads/')) return path;
     if (!window.__supa) return '';
     const { data } = window.__supa.storage.from('gallery-photos').getPublicUrl(path);
     return data && data.publicUrl || '';
@@ -1425,7 +1426,9 @@ class Component extends DCLogic {
     if (!confirm('¿Eliminar esta foto?')) return;
     this.setState(s => ({ dbGallery: (s.dbGallery || []).filter(g => g.id !== id) }));
     if (window.__supa) {
-      await window.__supa.storage.from('gallery-photos').remove([path]);
+      if (path && !path.startsWith('uploads/') && !path.startsWith('http')) {
+        await window.__supa.storage.from('gallery-photos').remove([path]);
+      }
       await window.__supa.from('gallery').delete().eq('id', id);
     }
   }
