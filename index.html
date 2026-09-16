@@ -947,7 +947,10 @@ class Component extends DCLogic {
   async checkSession() {
     if (!window.__supa) return setTimeout(() => this.checkSession(), 120);
     const { data } = await window.__supa.auth.getSession();
-    if (data && data.session) this.setState({ loggedIn: true });
+    if (!data || !data.session || !data.session.user) return;
+    const chk = await window.__supa.from('admins').select('user_id').eq('user_id', data.session.user.id).maybeSingle();
+    if (chk.data) this.setState({ loggedIn: true });
+    else await window.__supa.auth.signOut();
   }
   async hydrateAll() {
     if (!window.__supa) return setTimeout(() => this.hydrateAll(), 120);
@@ -1194,7 +1197,13 @@ class Component extends DCLogic {
         if (!window.__supa) { this.set({ loginError: 'Conectando... probá otra vez.' }); return; }
         this.set({ loginError: '' });
         var { data, error } = await window.__supa.auth.signInWithPassword({ email: email, password: pass });
-        if (error) { this.set({ loginError: error.message || 'Usuario o contraseña incorrectos.' }); return; }
+        if (error || !data || !data.user) { this.set({ loginError: (error && error.message) || 'Usuario o contraseña incorrectos.' }); return; }
+        var chk = await window.__supa.from('admins').select('user_id').eq('user_id', data.user.id).maybeSingle();
+        if (!chk.data) {
+          await window.__supa.auth.signOut();
+          this.set({ loginError: 'Este usuario no tiene acceso al panel.' });
+          return;
+        }
         this.set({ loggedIn: true, loginError: '', adminPass: '' });
         this.hydrateAll && this.hydrateAll();
       },

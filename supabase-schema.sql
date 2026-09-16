@@ -52,6 +52,25 @@ create table if not exists gallery (
 );
 create index if not exists gallery_order_idx on gallery (sort_order);
 
+-- ----- Admins ----------------------------------------------------------
+-- Solo los user_ids en esta tabla pueden entrar al panel y modificar datos.
+
+create table if not exists admins (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+alter table admins enable row level security;
+create policy "admins self read"
+  on admins for select to authenticated
+  using (auth.uid() = user_id);
+
+-- Helper: verifica si el auth.uid() actual está en admins.
+create or replace function public.is_admin() returns boolean
+language sql stable security definer as $$
+  select exists (select 1 from admins where user_id = auth.uid());
+$$;
+grant execute on function public.is_admin() to anon, authenticated;
+
 -- ----- RLS -------------------------------------------------------------
 
 alter table reservations   enable row level security;
@@ -73,20 +92,25 @@ create policy "gallery public read"
 create policy "reservations public insert"
   on reservations for insert with check (true);
 
--- Todo lo demás requiere estar autenticado (admin)
+-- Escrituras admin: requieren estar en la tabla admins
 create policy "reservations admin update"
-  on reservations for update to authenticated using (true) with check (true);
+  on reservations for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 create policy "reservations admin delete"
-  on reservations for delete to authenticated using (true);
+  on reservations for delete to authenticated
+  using (public.is_admin());
 
 create policy "blocked_dates admin write"
-  on blocked_dates for all to authenticated using (true) with check (true);
+  on blocked_dates for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
 create policy "config admin update"
-  on config for update to authenticated using (true) with check (true);
+  on config for update to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
 create policy "gallery admin write"
-  on gallery for all to authenticated using (true) with check (true);
+  on gallery for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
 
 -- ----- Storage bucket para fotos ---------------------------------------
 
@@ -106,11 +130,16 @@ create policy "gallery photos admin delete"
   on storage.objects for delete to authenticated
   using (bucket_id = 'gallery-photos');
 
+-- ----- Admin autorizado ------------------------------------------------
+-- Solo este user_id puede entrar al panel y modificar datos.
+
+insert into admins (user_id)
+values ('a2625c64-b5f9-46bb-b995-3a9532eb651d')
+on conflict (user_id) do nothing;
+
 -- =========================================================================
--- Después de correr esto:
---   1. Andá a Authentication → Users → Add user
---      Email:    tu-email@dominio
---      Password: (elegí una)
---      Auto Confirm: sí
---   2. Ese usuario es el que va a poder entrar al panel /admin.
+-- Para autorizar otro admin más adelante:
+--   insert into admins (user_id) values ('<uuid del user>')
+--   on conflict (user_id) do nothing;
+-- El uuid lo sacás de Authentication → Users.
 -- =========================================================================
