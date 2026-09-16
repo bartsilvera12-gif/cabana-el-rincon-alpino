@@ -601,6 +601,7 @@
       <div style="max-width:1120px;margin:0 auto;padding:20px clamp(20px,5vw,32px) 28px;display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px">
         <div style="font-size:12.5px;color:rgba(227,233,232,0.45)">© 2026 Cabaña El Rincón Alpino</div>
         <button onClick="{{ openPrivacy }}" style="background:transparent;border:none;font-size:12.5px;color:rgba(227,233,232,0.6);padding:0;cursor:pointer;text-align:left">Políticas de privacidad</button>
+        <button onClick="{{ openAdmin }}" style="background:transparent;border:none;font-size:12.5px;color:rgba(227,233,232,0.45);padding:0;cursor:pointer;text-align:left">Admin</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12.5px;color:rgba(227,233,232,0.5)">
           <span>Desarrollado por</span>
           <a href="https://neura.com.py" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;color:#D9A05B;font-weight:500;letter-spacing:0.3px">
@@ -653,6 +654,9 @@
         <input value="{{ adminUser }}" onChange="{{ onAdminUser }}" placeholder="admin" style="width:100%;padding:16px;font-size:16px;border:1px solid rgba(22,34,46,0.18);border-radius:12px;background:#F1F3F2;outline:none" />
         <label style="display:block;font-size:13px;font-weight:500;color:rgba(22,34,46,0.7);margin:14px 0 8px">Contraseña</label>
         <input type="password" value="{{ adminPass }}" onChange="{{ onAdminPass }}" placeholder="••••••••" style="width:100%;padding:16px;font-size:16px;border:1px solid rgba(22,34,46,0.18);border-radius:12px;background:#F1F3F2;outline:none" />
+        <sc-if value="{{ loginError }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:14px;padding:12px 14px;background:rgba(155,59,43,0.1);border:1px solid rgba(155,59,43,0.3);color:#9B3B2B;font-size:13px;border-radius:11px">{{ loginError }}</div>
+        </sc-if>
         <button onClick="{{ doLogin }}" style="width:100%;margin-top:20px;background:#2C6F7A;color:#F1F3F2;font-weight:700;font-size:15.5px;padding:17px;border:none;border-radius:12px;cursor:pointer">INGRESAR</button>
         <button onClick="{{ closeAdmin }}" style="width:100%;margin-top:10px;background:transparent;border:none;color:rgba(22,34,46,0.68);font-size:13px;padding:10px;cursor:pointer">Volver al sitio</button>
       </div>
@@ -876,7 +880,7 @@ function gs(n) { return Math.round(n).toLocaleString('de-DE'); }
 
 class Component extends DCLogic {
   state = {
-    view: 'site', menuOpen: false, loggedIn: false, adminUser: '', adminPass: '', adminTab: 'res',
+    view: 'site', menuOpen: false, loggedIn: false, adminUser: '', adminPass: '', loginError: '', adminTab: 'res',
     step: 'date', ym: { y: 2026, m: 8 }, checkIn: null, checkOut: null, guests: 2,
     name: '', phone: '', code: null, aliasCopied: false, amountCopied: false, gallery: 'Todo', gi: 0,
     dates: { '2026-09-19': 'confirmed', '2026-09-20': 'confirmed', '2026-09-25': 'pending', '2026-09-26': 'confirmed', '2026-10-03': 'confirmed', '2026-09-30': 'blocked' },
@@ -1062,7 +1066,13 @@ class Component extends DCLogic {
       openAdmin: () => this.set({ view: 'admin', menuOpen: false }), closeAdmin: () => this.set({ view: 'site', loggedIn: false }),
       adminUser: s.adminUser, adminPass: s.adminPass,
       onAdminUser: e => this.set({ adminUser: e.target.value }), onAdminPass: e => this.set({ adminPass: e.target.value }),
-      doLogin: () => this.set({ loggedIn: true }),
+      loginError: s.loginError,
+      doLogin: () => {
+        var u = (s.adminUser || '').trim().toLowerCase();
+        var p = s.adminPass || '';
+        if (u === 'admin' && p === 'alpino2026') this.set({ loggedIn: true, loginError: '', adminPass: '' });
+        else this.set({ loginError: 'Usuario o contraseña incorrectos.' });
+      },
       adminTabs: [['res', 'Reservas'], ['cal', 'Calendario'], ['cfg', 'Configuración']].map(([id, label]) => ({
         label, onClick: () => this.set({ adminTab: id }),
         bg: s.adminTab === id ? '#E6EAE9' : 'rgba(227,233,232,0.12)', fg: s.adminTab === id ? '#16222E' : 'rgba(227,233,232,0.8)'
