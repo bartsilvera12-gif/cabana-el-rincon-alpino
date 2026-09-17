@@ -499,6 +499,7 @@
 
           <a href="{{ waLink }}" target="_blank" rel="noopener" onClick="{{ goDone }}" style="display:block;margin-top:20px;background:#1E7A5E;color:#F1F3F2;font-weight:700;font-size:16px;letter-spacing:0.4px;padding:20px;border-radius:14px;text-align:center;box-shadow:0 8px 22px rgba(30,122,94,0.3)">YA TRANSFERÍ – ENVIAR COMPROBANTE</a>
           <div style="font-size:12.5px;color:rgba(22,34,46,0.68);margin-top:10px;text-align:center">Se abre WhatsApp con el mensaje listo. Solo adjuntá la imagen.</div>
+          <button onClick="{{ resetFlow }}" style="width:100%;margin-top:14px;background:transparent;border:none;color:rgba(22,34,46,0.65);font-size:13.5px;padding:10px;cursor:pointer;text-decoration:underline">Volver al calendario</button>
         </div>
         </sc-if>
 
@@ -514,6 +515,7 @@
           </div>
           <div style="margin-top:20px;border-top:1px solid rgba(22,34,46,0.1);padding-top:18px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.8px;color:rgba(22,34,46,0.72)">{{ code }} · {{ dateSummary }} · {{ guestsTxt }}</div>
           <a href="{{ waLink }}" target="_blank" rel="noopener" style="display:block;margin-top:18px;background:#1E7A5E;color:#F1F3F2;font-weight:700;font-size:15px;padding:18px;border-radius:14px">ENVIAR COMPROBANTE POR WHATSAPP</a>
+          <button onClick="{{ resetFlow }}" style="width:100%;margin-top:12px;background:transparent;border:none;color:rgba(22,34,46,0.65);font-size:13.5px;padding:10px;cursor:pointer;text-decoration:underline">Volver al inicio</button>
         </div>
         </sc-if>
       </div>
