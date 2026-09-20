@@ -28,14 +28,14 @@ create table if not exists blocked_dates (
 
 create table if not exists config (
   id int primary key default 1,
-  price_weekday bigint not null default 450000,
-  price_weekend bigint not null default 550000,
+  price_weekday bigint not null default 550000,
+  price_weekend bigint not null default 700000,
   price_extra_person bigint not null default 50000,
   max_guests int not null default 6,
   deposit_pct int not null default 50,
   check_in_time text not null default '16:00',
   check_out_time text not null default '12:00',
-  whatsapp text not null default '595982336705',
+  whatsapp text not null default '595987502862',
   alias text not null default '0982336705',
   constraint config_singleton check (id = 1)
 );
