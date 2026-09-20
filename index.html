@@ -32,7 +32,10 @@
   window.__SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzc0MTAxNDYxLCJleHAiOjE5MzE3ODE0NjF9.7_wAph8IolPMXtgfpezSwS5XR62IdD__qhqCywLDp3Q';
   (function ready() {
     if (!window.supabase) return setTimeout(ready, 50);
-    window.__supa = window.supabase.createClient(window.__SUPABASE_URL, window.__SUPABASE_ANON, { auth: { persistSession: true, autoRefreshToken: true } });
+    window.__supa = window.supabase.createClient(window.__SUPABASE_URL, window.__SUPABASE_ANON, {
+      auth: { persistSession: true, autoRefreshToken: true },
+      db: { schema: 'rinconalpino' }
+    });
   })();
 </script>
 </head>
