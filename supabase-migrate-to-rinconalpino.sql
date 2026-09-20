@@ -20,15 +20,7 @@ alter table if exists public.admins        set schema rinconalpino;
 grant select, insert, update, delete on all tables in schema rinconalpino
   to anon, authenticated;
 
--- 3) Rehacer la función is_admin() en el nuevo schema apuntando a la tabla movida
-drop function if exists public.is_admin();
-create or replace function rinconalpino.is_admin() returns boolean
-language sql stable security definer set search_path = rinconalpino, public as $$
-  select exists (select 1 from rinconalpino.admins where user_id = auth.uid());
-$$;
-grant execute on function rinconalpino.is_admin() to anon, authenticated;
-
--- 4) Rehacer las policies para que referencien la nueva función
+-- 3) Dropear TODAS las policies primero (usan la vieja public.is_admin)
 drop policy if exists "admins self read"           on rinconalpino.admins;
 drop policy if exists "reservations public read"   on rinconalpino.reservations;
 drop policy if exists "blocked_dates public read"  on rinconalpino.blocked_dates;
@@ -40,6 +32,18 @@ drop policy if exists "reservations admin delete"  on rinconalpino.reservations;
 drop policy if exists "blocked_dates admin write"  on rinconalpino.blocked_dates;
 drop policy if exists "config admin update"        on rinconalpino.config;
 drop policy if exists "gallery admin write"        on rinconalpino.gallery;
+drop policy if exists "gallery photos public read"  on storage.objects;
+drop policy if exists "gallery photos admin write"  on storage.objects;
+drop policy if exists "gallery photos admin update" on storage.objects;
+drop policy if exists "gallery photos admin delete" on storage.objects;
+
+-- 4) Ahora sí, rehacer la función is_admin() en el nuevo schema
+drop function if exists public.is_admin();
+create or replace function rinconalpino.is_admin() returns boolean
+language sql stable security definer set search_path = rinconalpino, public as $$
+  select exists (select 1 from rinconalpino.admins where user_id = auth.uid());
+$$;
+grant execute on function rinconalpino.is_admin() to anon, authenticated;
 
 create policy "admins self read"
   on rinconalpino.admins for select to authenticated
@@ -76,13 +80,7 @@ create policy "gallery admin write"
   on rinconalpino.gallery for all to authenticated
   using (rinconalpino.is_admin()) with check (rinconalpino.is_admin());
 
--- 5) Storage policies siguen en `storage.objects` (schema `storage`), solo
---    hay que actualizar la referencia a is_admin() para que use el nuevo path.
-drop policy if exists "gallery photos public read"  on storage.objects;
-drop policy if exists "gallery photos admin write"  on storage.objects;
-drop policy if exists "gallery photos admin update" on storage.objects;
-drop policy if exists "gallery photos admin delete" on storage.objects;
-
+-- 6) Storage policies (ya dropeadas arriba en el paso 3, ahora se recrean)
 create policy "gallery photos public read"
   on storage.objects for select
   using (bucket_id = 'gallery-photos');
@@ -96,7 +94,7 @@ create policy "gallery photos admin delete"
   on storage.objects for delete to authenticated
   using (bucket_id = 'gallery-photos' and rinconalpino.is_admin());
 
--- 6) Chequeo
+-- 7) Chequeo
 select 'schemas' as label, string_agg(schema_name, ', ') as val
 from information_schema.schemata where schema_name in ('public', 'rinconalpino')
 union all
