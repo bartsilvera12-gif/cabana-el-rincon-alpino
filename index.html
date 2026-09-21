@@ -410,7 +410,7 @@
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:18px">
             <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#E8EEED;border:1px solid rgba(217,160,91,0.6)"></span>Disponible</span>
-            <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#16222E"></span>Seleccionado</span>
+            <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#2C6F7A"></span>Seleccionado</span>
             <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#F0DDB4"></span>Pendiente</span>
             <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#BE3B36"></span>Reservado</span>
             <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#1F262C"></span>Bloqueado</span>
@@ -1270,7 +1270,7 @@ class Component extends DCLogic {
       if (st === 'confirmed') return { num, bg: '#BE3B36', fg: '#FDEEEC', border: 'transparent', cursor: 'not-allowed', weight: '600', deco: 'none', disabled: true, onClick: null };
       if (st === 'blocked') return { num, bg: '#1F262C', fg: 'rgba(241,243,242,0.78)', border: 'transparent', cursor: 'not-allowed', weight: '500', deco: 'none', disabled: true, onClick: null };
       if (st === 'pending') return { num, bg: '#F0DDB4', fg: '#6B4B1E', border: 'transparent', cursor: 'not-allowed', weight: '500', deco: 'none', disabled: true, onClick: null };
-      if (sel) return { num, bg: '#16222E', fg: '#F1F3F2', border: '#16222E', cursor: 'pointer', weight: '700', deco: 'none', disabled: false, onClick: () => this.pickDate(k) };
+      if (sel) return { num, bg: '#2C6F7A', fg: '#F1F3F2', border: '#2C6F7A', cursor: 'pointer', weight: '700', deco: 'none', disabled: false, onClick: () => this.pickDate(k) };
       if (inRange) return { num, bg: 'rgba(22,34,46,0.12)', fg: '#16222E', border: 'transparent', cursor: 'pointer', weight: '500', deco: 'none', disabled: false, onClick: () => this.pickDate(k) };
       return { num, bg: '#E8EEED', fg: '#16222E', border: 'rgba(217,160,91,0.55)', cursor: 'pointer', weight: '500', deco: 'none', disabled: false, onClick: () => this.pickDate(k) };
     });
