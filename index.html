@@ -411,8 +411,9 @@
           <div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:18px">
             <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#E8EEED;border:1px solid rgba(217,160,91,0.6)"></span>Disponible</span>
             <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#16222E"></span>Seleccionado</span>
-            <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#DCDFDE"></span>Ocupado</span>
             <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#F0DDB4"></span>Pendiente</span>
+            <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#BE3B36"></span>Reservado</span>
+            <span style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:rgba(22,34,46,0.7)"><span style="width:13px;height:13px;border-radius:4px;background:#1F262C"></span>Bloqueado</span>
           </div>
           <sc-if value="{{ hasDate }}" hint-placeholder-val="{{ false }}">
             <div style="margin-top:20px;animation:fadeUp .3s ease both">
@@ -791,6 +792,49 @@
             </sc-for>
           </div>
         </div>
+
+        <!-- CARGAR RESERVA A MANO -->
+        <div style="background:#F1F3F2;border:1px solid rgba(22,34,46,0.1);border-radius:18px;padding:18px;margin-top:16px">
+          <h3 style="font-family:'Poppins',sans-serif;font-size:20px;font-weight:600;margin:0">Cargar una reserva a mano</h3>
+          <div style="font-size:13.5px;color:rgba(22,34,46,0.72);margin-top:6px">Para las reservas que llegan por WhatsApp, llamada o en persona. Al guardar, esas fechas quedan marcadas como reservadas en el calendario.</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px;margin-top:16px">
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">Nombre del cliente</label>
+              <input value="{{ mrName }}" onChange="{{ onMrName }}" placeholder="Ej. María González" style="width:100%;padding:14px;font-size:15px;border:1px solid rgba(22,34,46,0.18);border-radius:11px;background:#FFF;outline:none" />
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">Teléfono / WhatsApp</label>
+              <input value="{{ mrPhone }}" onChange="{{ onMrPhone }}" inputMode="tel" placeholder="0981 123 456" style="width:100%;padding:14px;font-size:15px;border:1px solid rgba(22,34,46,0.18);border-radius:11px;background:#FFF;outline:none" />
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">Fecha de ingreso</label>
+              <input type="date" value="{{ mrCheckIn }}" onChange="{{ onMrCheckIn }}" style="width:100%;padding:13px 14px;font-size:15px;border:1px solid rgba(22,34,46,0.18);border-radius:11px;background:#FFF;outline:none" />
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">Fecha de salida</label>
+              <input type="date" value="{{ mrCheckOut }}" onChange="{{ onMrCheckOut }}" style="width:100%;padding:13px 14px;font-size:15px;border:1px solid rgba(22,34,46,0.18);border-radius:11px;background:#FFF;outline:none" />
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">Cantidad de personas</label>
+              <input inputMode="numeric" value="{{ mrGuests }}" onChange="{{ onMrGuests }}" placeholder="2" style="width:100%;padding:14px;font-size:15px;border:1px solid rgba(22,34,46,0.18);border-radius:11px;background:#FFF;outline:none" />
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">Monto total (Gs.)</label>
+              <input inputMode="numeric" value="{{ mrTotal }}" onChange="{{ onMrTotal }}" placeholder="0" style="width:100%;padding:14px;font-size:15px;border:1px solid rgba(22,34,46,0.18);border-radius:11px;background:#FFF;outline:none" />
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">Monto de la seña (Gs.)</label>
+              <input inputMode="numeric" value="{{ mrDeposit }}" onChange="{{ onMrDeposit }}" placeholder="0" style="width:100%;padding:14px;font-size:15px;border:1px solid rgba(22,34,46,0.18);border-radius:11px;background:#FFF;outline:none" />
+            </div>
+          </div>
+          <sc-if value="{{ mrError }}" hint-placeholder-val="{{ '' }}">
+            <div style="margin-top:14px;padding:11px 14px;background:rgba(155,59,43,0.1);border:1px solid rgba(155,59,43,0.3);color:#9B3B2B;font-size:13px;border-radius:11px">{{ mrError }}</div>
+          </sc-if>
+          <sc-if value="{{ mrSaved }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:14px;padding:11px 14px;background:rgba(30,122,94,0.1);border:1px solid rgba(30,122,94,0.3);color:#1E7A5E;font-size:13px;border-radius:11px">Reserva guardada ✓ Las fechas ya figuran como reservadas.</div>
+          </sc-if>
+          <button onClick="{{ saveManualReservation }}" style="width:100%;margin-top:16px;background:#2C6F7A;color:#F1F3F2;font-weight:700;font-size:15.5px;letter-spacing:0.4px;padding:16px;border:none;border-radius:12px;cursor:pointer">Guardar reserva</button>
+        </div>
       </div>
       </sc-if>
 
@@ -972,6 +1016,7 @@ class Component extends DCLogic {
       { code: 'RA-00121', name: 'Diego Ferreira', phone: '0972 118 604', ci: '2026-09-19', co: '2026-09-21', guests: 6, total: 1300000, status: 'CONFIRMADA', created: 'ayer 19:05' }
     ],
     nextCode: 124,
+    mrName: '', mrPhone: '', mrCheckIn: '', mrCheckOut: '', mrGuests: 2, mrTotal: '', mrDeposit: '', mrError: '', mrSaved: false,
     dbGallery: null,
     cfgSaved: {}
   };
@@ -1041,6 +1086,7 @@ class Component extends DCLogic {
     patch.reservations = rsvs.map(r => ({
       code: r.code, name: r.name, phone: r.phone,
       ci: r.check_in, co: r.check_out, guests: Number(r.guests), total: Number(r.total),
+      deposit: r.deposit != null ? Number(r.deposit) : null,
       status: r.status, created: new Date(r.created_at).toLocaleString('es-PY', { dateStyle: 'short', timeStyle: 'short' })
     }));
     if (galR && galR.data) patch.dbGallery = galR.data;
@@ -1070,6 +1116,52 @@ class Component extends DCLogic {
   }
 
   set(p) { this.setState(p); }
+
+  // Reserva cargada a mano por el admin (WhatsApp, llamada, presencial).
+  // Queda como CONFIRMADA para que las fechas se pinten como reservadas.
+  async saveManualReservation() {
+    const s = this.state;
+    const name = (s.mrName || '').trim();
+    const phone = (s.mrPhone || '').trim();
+    const ci = s.mrCheckIn, co = s.mrCheckOut;
+    const guests = Math.max(1, Number(s.mrGuests) || 1);
+    const total = Number(String(s.mrTotal).replace(/\D/g, '')) || 0;
+    const deposit = Number(String(s.mrDeposit).replace(/\D/g, '')) || 0;
+
+    if (!name || !phone) { this.setState({ mrError: 'Completá el nombre y el teléfono.', mrSaved: false }); return; }
+    if (!ci || !co) { this.setState({ mrError: 'Elegí la fecha de ingreso y la de salida.', mrSaved: false }); return; }
+    if (fromKey(co) <= fromKey(ci)) { this.setState({ mrError: 'La salida tiene que ser después del ingreso.', mrSaved: false }); return; }
+
+    // No permitir pisar noches ya reservadas o bloqueadas.
+    const occupied = [];
+    for (let x = fromKey(ci); x < fromKey(co); x.setDate(x.getDate() + 1)) {
+      const kk = key(x.getFullYear(), x.getMonth(), x.getDate());
+      const st = s.dates[kk];
+      if (st === 'confirmed' || st === 'pending' || st === 'blocked') occupied.push(kk);
+    }
+    if (occupied.length) { this.setState({ mrError: 'Esas fechas ya están ocupadas (' + occupied.length + (occupied.length === 1 ? ' noche' : ' noches') + '). Revisá el calendario.', mrSaved: false }); return; }
+
+    const code = 'RA-' + String(s.nextCode).padStart(5, '0');
+    this.setState(st2 => {
+      const d = Object.assign({}, st2.dates);
+      for (let x = fromKey(ci); x < fromKey(co); x.setDate(x.getDate() + 1)) {
+        d[key(x.getFullYear(), x.getMonth(), x.getDate())] = 'confirmed';
+      }
+      const res = { code, name, phone, ci, co, guests, total, deposit, status: 'CONFIRMADA', created: 'ahora (a mano)' };
+      return {
+        dates: d, reservations: [res].concat(st2.reservations), nextCode: st2.nextCode + 1,
+        mrName: '', mrPhone: '', mrCheckIn: '', mrCheckOut: '', mrGuests: 2, mrTotal: '', mrDeposit: '',
+        mrError: '', mrSaved: true
+      };
+    });
+
+    if (window.__supa) {
+      const row = { code, name, phone, check_in: ci, check_out: co, guests, total, status: 'CONFIRMADA' };
+      if (deposit > 0) row.deposit = deposit;
+      await window.__supa.from('reservations').insert(row);
+      setTimeout(() => this.hydrateAll(), 500);
+    }
+  }
 
   // Numero de WhatsApp -> solo digitos con codigo de pais, para armar wa.me.
   // Acepta lo que el admin escriba: '+595 987 502862', '0987 502862', '987502862'.
@@ -1175,7 +1267,8 @@ class Component extends DCLogic {
       const sel = k === s.checkIn || k === s.checkOut;
       const num = fromKey(k).getDate();
       if (st === 'past') return { num, bg: 'transparent', fg: 'rgba(22,34,46,0.22)', border: 'transparent', cursor: 'default', weight: '400', deco: 'none', disabled: true, onClick: null };
-      if (st === 'confirmed' || st === 'blocked') return { num, bg: '#DCDFDE', fg: 'rgba(22,34,46,0.35)', border: 'transparent', cursor: 'not-allowed', weight: '400', deco: 'line-through', disabled: true, onClick: null };
+      if (st === 'confirmed') return { num, bg: '#BE3B36', fg: '#FDEEEC', border: 'transparent', cursor: 'not-allowed', weight: '600', deco: 'none', disabled: true, onClick: null };
+      if (st === 'blocked') return { num, bg: '#1F262C', fg: 'rgba(241,243,242,0.78)', border: 'transparent', cursor: 'not-allowed', weight: '500', deco: 'none', disabled: true, onClick: null };
       if (st === 'pending') return { num, bg: '#F0DDB4', fg: '#6B4B1E', border: 'transparent', cursor: 'not-allowed', weight: '500', deco: 'none', disabled: true, onClick: null };
       if (sel) return { num, bg: '#16222E', fg: '#F1F3F2', border: '#16222E', cursor: 'pointer', weight: '700', deco: 'none', disabled: false, onClick: () => this.pickDate(k) };
       if (inRange) return { num, bg: 'rgba(22,34,46,0.12)', fg: '#16222E', border: 'transparent', cursor: 'pointer', weight: '500', deco: 'none', disabled: false, onClick: () => this.pickDate(k) };
@@ -1199,9 +1292,9 @@ class Component extends DCLogic {
         }
       };
       if (st === 'past') return { num, bg: 'transparent', fg: 'rgba(22,34,46,0.22)', border: 'transparent', cursor: 'default', onClick: null };
-      if (st === 'confirmed') return { num, bg: '#2C4456', fg: '#F1F3F2', border: 'transparent', cursor: 'pointer', onClick: toggle };
+      if (st === 'confirmed') return { num, bg: '#BE3B36', fg: '#FDEEEC', border: 'transparent', cursor: 'pointer', onClick: toggle };
       if (st === 'pending') return { num, bg: '#F0DDB4', fg: '#6B4B1E', border: 'transparent', cursor: 'pointer', onClick: toggle };
-      if (st === 'blocked') return { num, bg: '#DCDFDE', fg: 'rgba(22,34,46,0.7)', border: 'transparent', cursor: 'pointer', onClick: toggle };
+      if (st === 'blocked') return { num, bg: '#1F262C', fg: 'rgba(241,243,242,0.82)', border: 'transparent', cursor: 'pointer', onClick: toggle };
       return { num, bg: '#E8EEED', fg: '#16222E', border: 'rgba(217,160,91,0.55)', cursor: 'pointer', onClick: toggle };
     });
 
@@ -1351,7 +1444,20 @@ class Component extends DCLogic {
       prevMonth: () => this.set({ ym: s.ym.m === 0 ? { y: s.ym.y - 1, m: 11 } : { y: s.ym.y, m: s.ym.m - 1 } }),
       nextMonth: () => this.set({ ym: s.ym.m === 11 ? { y: s.ym.y + 1, m: 0 } : { y: s.ym.y, m: s.ym.m + 1 } }),
       days, adminDays,
-      adminLegend: [{ label: 'Disponible', bg: '#E8EEED' }, { label: 'Pendiente', bg: '#F0DDB4' }, { label: 'Confirmada', bg: '#2C4456' }, { label: 'Bloqueada', bg: '#DCDFDE' }],
+      adminLegend: [{ label: 'Disponible', bg: '#E8EEED' }, { label: 'Pendiente', bg: '#F0DDB4' }, { label: 'Reservada', bg: '#BE3B36' }, { label: 'Bloqueada', bg: '#1F262C' }],
+
+      mrName: s.mrName, mrPhone: s.mrPhone, mrCheckIn: s.mrCheckIn, mrCheckOut: s.mrCheckOut,
+      mrGuests: String(s.mrGuests), mrError: s.mrError, mrSaved: !!s.mrSaved,
+      mrTotal: s.mrTotal ? gs(Number(String(s.mrTotal).replace(/\D/g, '')) || 0) : '',
+      mrDeposit: s.mrDeposit ? gs(Number(String(s.mrDeposit).replace(/\D/g, '')) || 0) : '',
+      onMrName: e => this.set({ mrName: e.target.value, mrSaved: false, mrError: '' }),
+      onMrPhone: e => this.set({ mrPhone: e.target.value.replace(/[^\d\s+()-]/g, ''), mrSaved: false, mrError: '' }),
+      onMrCheckIn: e => this.set({ mrCheckIn: e.target.value, mrSaved: false, mrError: '' }),
+      onMrCheckOut: e => this.set({ mrCheckOut: e.target.value, mrSaved: false, mrError: '' }),
+      onMrGuests: e => this.set({ mrGuests: Number(String(e.target.value).replace(/\D/g, '')) || 1, mrSaved: false, mrError: '' }),
+      onMrTotal: e => this.set({ mrTotal: String(e.target.value).replace(/\D/g, ''), mrSaved: false, mrError: '' }),
+      onMrDeposit: e => this.set({ mrDeposit: String(e.target.value).replace(/\D/g, ''), mrSaved: false, mrError: '' }),
+      saveManualReservation: () => this.saveManualReservation(),
 
       sDate: s.step === 'date', sGuests: s.step === 'guests', sData: s.step === 'data', sSummary: s.step === 'summary', sPay: s.step === 'pay', sDone: s.step === 'done',
       showChosenStrip: s.step !== 'date' && s.step !== 'done',
@@ -1416,7 +1522,7 @@ class Component extends DCLogic {
       reservations: s.reservations.map(r => Object.assign({
         code: r.code, name: r.name, phone: r.phone, guests: String(r.guests), created: r.created, status: r.status,
         checkIn: fmtShort(r.ci) + ' · ' + c.checkIn, checkOut: fmtShort(r.co) + ' · ' + c.checkOut,
-        money: 'Gs. ' + gs(r.total) + ' / ' + gs(r.total * c.depositPct / 100),
+        money: 'Gs. ' + gs(r.total) + ' / ' + gs((r.deposit != null && r.deposit > 0) ? r.deposit : r.total * c.depositPct / 100),
         actionable: r.status === 'PENDIENTE',
         approve: () => decide(r.code, 'CONFIRMADA'), reject: () => decide(r.code, 'RECHAZADA')
       }, badge(r.status))),

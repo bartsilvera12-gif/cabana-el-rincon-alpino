@@ -13,6 +13,7 @@ create table if not exists reservations (
   check_out date not null,
   guests int not null,
   total bigint not null,
+  deposit bigint,
   status text not null default 'PENDIENTE'
     check (status in ('PENDIENTE','CONFIRMADA','RECHAZADA','VENCIDA')),
   created_at timestamptz not null default now()
