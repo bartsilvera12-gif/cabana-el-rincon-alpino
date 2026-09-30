@@ -1132,21 +1132,21 @@ class Component extends DCLogic {
     if (!ci || !co) { this.setState({ mrError: 'Elegí la fecha de ingreso y la de salida.', mrSaved: false }); return; }
     if (fromKey(co) <= fromKey(ci)) { this.setState({ mrError: 'La salida tiene que ser después del ingreso.', mrSaved: false }); return; }
 
-    // No permitir pisar noches ya reservadas o bloqueadas.
-    const occupied = [];
+    // Noches de la estadia (la de salida no se ocupa).
+    const nights = [];
     for (let x = fromKey(ci); x < fromKey(co); x.setDate(x.getDate() + 1)) {
-      const kk = key(x.getFullYear(), x.getMonth(), x.getDate());
-      const st = s.dates[kk];
-      if (st === 'confirmed' || st === 'pending' || st === 'blocked') occupied.push(kk);
+      nights.push(key(x.getFullYear(), x.getMonth(), x.getDate()));
     }
-    if (occupied.length) { this.setState({ mrError: 'Esas fechas ya están ocupadas (' + occupied.length + (occupied.length === 1 ? ' noche' : ' noches') + '). Revisá el calendario.', mrSaved: false }); return; }
+    // Solo frena si hay una reserva REAL (confirmada o pendiente) en esas noches.
+    // Un dia "bloqueado" no frena: la reserva lo reemplaza y libera el bloqueo,
+    // asi el admin puede reservar aunque haya tocado la fecha sin querer.
+    const occupied = nights.filter(kk => s.dates[kk] === 'confirmed' || s.dates[kk] === 'pending');
+    if (occupied.length) { this.setState({ mrError: 'Esas fechas ya tienen una reserva (' + occupied.length + (occupied.length === 1 ? ' noche' : ' noches') + '). Revisá el calendario.', mrSaved: false }); return; }
 
     const code = 'RA-' + String(s.nextCode).padStart(5, '0');
     this.setState(st2 => {
       const d = Object.assign({}, st2.dates);
-      for (let x = fromKey(ci); x < fromKey(co); x.setDate(x.getDate() + 1)) {
-        d[key(x.getFullYear(), x.getMonth(), x.getDate())] = 'confirmed';
-      }
+      nights.forEach(kk => { d[kk] = 'confirmed'; });   // pisa cualquier bloqueo previo
       const res = { code, name, phone, ci, co, guests, total, deposit, status: 'CONFIRMADA', created: 'ahora (a mano)' };
       return {
         dates: d, reservations: [res].concat(st2.reservations), nextCode: st2.nextCode + 1,
@@ -1156,6 +1156,9 @@ class Component extends DCLogic {
     });
 
     if (window.__supa) {
+      // Liberar en la base los bloqueos de esas noches (la reserva los reemplaza),
+      // si no hydrateAll volveria a pintarlas como bloqueadas al recargar.
+      await window.__supa.from('blocked_dates').delete().in('date', nights);
       const row = { code, name, phone, check_in: ci, check_out: co, guests, total, status: 'CONFIRMADA' };
       if (deposit > 0) row.deposit = deposit;
       await window.__supa.from('reservations').insert(row);
