@@ -1157,6 +1157,14 @@ class Component extends DCLogic {
 
   // Reserva cargada a mano por el admin (WhatsApp, llamada, presencial).
   // Queda como CONFIRMADA para que las fechas se pinten como reservadas.
+  // Próximo código = mayor existente + 1 (nunca un contador fijo, que chocaba
+  // con reservas ya guardadas y hacía fallar el alta con 409 duplicado).
+  nextReservationCode(off) {
+    let max = 123;
+    (this.state.reservations || []).forEach(r => { const m = /^RA-0*(\d+)$/.exec(r.code || ''); if (m) max = Math.max(max, parseInt(m[1], 10)); });
+    return 'RA-' + String(max + 1 + (off || 0)).padStart(5, '0');
+  }
+
   async saveManualReservation() {
     const s = this.state;
     const name = (s.mrName || '').trim();
@@ -1181,18 +1189,25 @@ class Component extends DCLogic {
     const occupied = nights.filter(kk => s.dates[kk] === 'confirmed' || s.dates[kk] === 'pending');
     if (occupied.length) { this.setState({ mrError: 'Esas fechas ya tienen una reserva (' + occupied.length + (occupied.length === 1 ? ' noche' : ' noches') + '). Revisá el calendario.', mrSaved: false }); return; }
 
-    const code = 'RA-' + String(s.nextCode).padStart(5, '0');
+    // Código = mayor existente + 1 (no un contador fijo). Antes arrancaba en 124
+    // y chocaba con RA-00124.. ya guardadas → el alta fallaba con 409 duplicado.
+    let code = this.nextReservationCode(0);
 
-    // Guardar en la base PRIMERO y confirmar que realmente entró, ANTES de
-    // decir "guardado". Si falla (backend caído/schema sin exponer), avisamos
-    // y NO fingimos éxito ni tocamos el calendario: no se pierde nada en silencio.
+    // Guardar en la base y confirmar que realmente entró ANTES de decir "guardado".
+    // El alta va con cliente ANÓNIMO (sin sesión): es pública, así que no falla por
+    // un token de admin roto/vencido (iPhone/Safari). Si el código choca, probamos
+    // el siguiente.
     if (window.__supa) {
-      const row = { code, name, phone, check_in: ci, check_out: co, guests, total, status: 'CONFIRMADA' };
-      if (deposit > 0) row.deposit = deposit;
-      // Alta con cliente ANÓNIMO (sin sesión): el alta es pública, así que nunca
-      // falla por un token de admin roto/vencido (lo que rompía en iPhone/Safari).
       const sb = window.__supaAnon || window.__supa;
-      const ins = await sb.from('reservations').insert(row).select('code');
+      const isDup = e => !!e && (e.code === '23505' || String(e.code) === '409' || /duplicate|already exists/i.test(String(e.message)));
+      let ins, off = 0;
+      do {
+        code = this.nextReservationCode(off);
+        const row = { code, name, phone, check_in: ci, check_out: co, guests, total, status: 'CONFIRMADA' };
+        if (deposit > 0) row.deposit = deposit;
+        ins = await sb.from('reservations').insert(row).select('code');
+        off++;
+      } while (isDup(ins.error) && off < 8);
       if (ins.error || !ins.data || !ins.data.length) {
         this.setState({ mrError: 'No se pudo guardar la reserva (sin conexión con la base). No se guardó nada — probá de nuevo en un momento.', mrSaved: false });
         return;
@@ -1631,15 +1646,21 @@ class Component extends DCLogic {
         { k: 'A nombre de', v: s.name || '—' }
       ],
       goPay: async () => {
-        const code = 'RA-' + String(s.nextCode).padStart(5, '0');
+        let code = this.nextReservationCode(0);
         // Registrar en la base y confirmar ANTES de pasar a la pantalla de pago,
         // para que ninguna reserva del huésped se pierda en silencio.
         if (window.__supa) {
           const sb = window.__supaAnon || window.__supa;
-          const ins = await sb.from('reservations').insert({
-            code: code, name: s.name || 'Huésped web', phone: s.phone || '—',
-            check_in: s.checkIn, check_out: coKey, guests: s.guests, total: total, status: 'PENDIENTE'
-          }).select('code');
+          const isDup = e => !!e && (e.code === '23505' || String(e.code) === '409' || /duplicate|already exists/i.test(String(e.message)));
+          let ins, off = 0;
+          do {
+            code = this.nextReservationCode(off);
+            ins = await sb.from('reservations').insert({
+              code: code, name: s.name || 'Huésped web', phone: s.phone || '—',
+              check_in: s.checkIn, check_out: coKey, guests: s.guests, total: total, status: 'PENDIENTE'
+            }).select('code');
+            off++;
+          } while (isDup(ins.error) && off < 8);
           if (ins.error || !ins.data || !ins.data.length) {
             alert('No pudimos registrar tu reserva por un problema de conexión. Por favor escribinos por WhatsApp para confirmar tu fecha.');
             return;
