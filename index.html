@@ -36,6 +36,13 @@
       auth: { persistSession: true, autoRefreshToken: true },
       db: { schema: 'rinconalpino' }
     });
+    // Cliente SIN sesión: para altas públicas (reservas) que no deben depender
+    // del token de admin. En iPhone/Safari ese token a veces se rompe y el alta
+    // fallaba con 401. Con el anon key, el alta pública siempre entra.
+    window.__supaAnon = window.supabase.createClient(window.__SUPABASE_URL, window.__SUPABASE_ANON, {
+      auth: { persistSession: false, autoRefreshToken: false, storageKey: 'ra-anon-nosession' },
+      db: { schema: 'rinconalpino' }
+    });
   })();
 </script>
 </head>
@@ -761,10 +768,12 @@
                   <button onClick="{{ r.approve }}" style="flex:1;background:#2C4456;color:#F1F3F2;font-weight:700;font-size:14px;letter-spacing:0.5px;padding:15px;border:none;border-radius:12px;cursor:pointer">APROBAR</button>
                   <button onClick="{{ r.reject }}" style="flex:1;background:transparent;color:#9B3B2B;font-weight:700;font-size:14px;letter-spacing:0.5px;padding:15px;border:1px solid rgba(155,59,43,0.35);border-radius:12px;cursor:pointer">RECHAZAR</button>
                 </div>
+                <button onClick="{{ r.edit }}" style="width:100%;margin-top:10px;background:transparent;color:#16222E;font-weight:600;font-size:13px;letter-spacing:0.5px;padding:12px;border:1px solid rgba(22,34,46,0.2);border-radius:12px;cursor:pointer">EDITAR DATOS</button>
               </sc-if>
               <sc-if value="{{ r.isConfirmed }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;gap:10px;margin-top:16px">
-                  <button onClick="{{ r.cancel }}" style="flex:1;background:transparent;color:#9B3B2B;font-weight:700;font-size:14px;letter-spacing:0.5px;padding:15px;border:1px solid rgba(155,59,43,0.35);border-radius:12px;cursor:pointer">CANCELAR Y LIBERAR FECHAS</button>
+                  <button onClick="{{ r.edit }}" style="flex:1;background:transparent;color:#16222E;font-weight:700;font-size:14px;letter-spacing:0.5px;padding:15px;border:1px solid rgba(22,34,46,0.25);border-radius:12px;cursor:pointer">EDITAR</button>
+                  <button onClick="{{ r.cancel }}" style="flex:1;background:transparent;color:#9B3B2B;font-weight:700;font-size:14px;letter-spacing:0.5px;padding:15px;border:1px solid rgba(155,59,43,0.35);border-radius:12px;cursor:pointer">CANCELAR Y LIBERAR</button>
                 </div>
               </sc-if>
               <sc-if value="{{ r.isInactive }}" hint-placeholder-val="{{ false }}">
@@ -808,8 +817,8 @@
 
         <!-- CARGAR RESERVA A MANO -->
         <div style="background:#F1F3F2;border:1px solid rgba(22,34,46,0.1);border-radius:18px;padding:18px;margin-top:16px">
-          <h3 style="font-family:'Poppins',sans-serif;font-size:20px;font-weight:600;margin:0">Cargar una reserva a mano</h3>
-          <div style="font-size:13.5px;color:rgba(22,34,46,0.72);margin-top:6px">Para las reservas que llegan por WhatsApp, llamada o en persona. Al guardar, esas fechas quedan marcadas como reservadas en el calendario.</div>
+          <h3 style="font-family:'Poppins',sans-serif;font-size:20px;font-weight:600;margin:0">{{ mrFormTitle }}</h3>
+          <div style="font-size:13.5px;color:rgba(22,34,46,0.72);margin-top:6px">{{ mrFormHint }}</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px;margin-top:16px">
             <div>
               <label style="display:block;font-size:12.5px;font-weight:500;color:rgba(22,34,46,0.72);margin-bottom:7px">Nombre del cliente</label>
@@ -846,7 +855,10 @@
           <sc-if value="{{ mrSaved }}" hint-placeholder-val="{{ false }}">
             <div style="margin-top:14px;padding:11px 14px;background:rgba(30,122,94,0.1);border:1px solid rgba(30,122,94,0.3);color:#1E7A5E;font-size:13px;border-radius:11px">Reserva guardada ✓ Las fechas ya figuran como reservadas.</div>
           </sc-if>
-          <button onClick="{{ saveManualReservation }}" style="width:100%;margin-top:16px;background:#2C6F7A;color:#F1F3F2;font-weight:700;font-size:15.5px;letter-spacing:0.4px;padding:16px;border:none;border-radius:12px;cursor:pointer">Guardar reserva</button>
+          <button onClick="{{ saveManualReservation }}" style="width:100%;margin-top:16px;background:#2C6F7A;color:#F1F3F2;font-weight:700;font-size:15.5px;letter-spacing:0.4px;padding:16px;border:none;border-radius:12px;cursor:pointer">{{ mrSaveLabel }}</button>
+          <sc-if value="{{ mrEditing }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ cancelEdit }}" style="width:100%;margin-top:10px;background:transparent;color:rgba(22,34,46,0.72);font-weight:600;font-size:14px;padding:13px;border:1px solid rgba(22,34,46,0.2);border-radius:12px;cursor:pointer">Cancelar edición</button>
+          </sc-if>
         </div>
       </div>
       </sc-if>
@@ -1029,7 +1041,7 @@ class Component extends DCLogic {
       { code: 'RA-00121', name: 'Diego Ferreira', phone: '0972 118 604', ci: '2026-09-19', co: '2026-09-21', guests: 6, total: 1300000, status: 'CONFIRMADA', created: 'ayer 19:05' }
     ],
     nextCode: 124,
-    mrName: '', mrPhone: '', mrCheckIn: '', mrCheckOut: '', mrGuests: 2, mrTotal: '', mrDeposit: '', mrError: '', mrSaved: false,
+    mrName: '', mrPhone: '', mrCheckIn: '', mrCheckOut: '', mrGuests: 2, mrTotal: '', mrDeposit: '', mrError: '', mrSaved: false, mrEditCode: null,
     dbGallery: null,
     cfgSaved: {}
   };
@@ -1177,21 +1189,16 @@ class Component extends DCLogic {
     if (window.__supa) {
       const row = { code, name, phone, check_in: ci, check_out: co, guests, total, status: 'CONFIRMADA' };
       if (deposit > 0) row.deposit = deposit;
-      const isAuthErr = e => !!e && (e.code === 'PGRST301' || e.code === '401' || /jwt|token|expired|decode|key/i.test(String(e.message) + String(e.hint)));
-      let ins = await window.__supa.from('reservations').insert(row).select('code');
-      if (isAuthErr(ins.error)) {
-        // Sesión de admin vencida: refrescar el token y reintentar una sola vez.
-        try { await window.__supa.auth.refreshSession(); } catch (_) {}
-        ins = await window.__supa.from('reservations').insert(row).select('code');
-      }
+      // Alta con cliente ANÓNIMO (sin sesión): el alta es pública, así que nunca
+      // falla por un token de admin roto/vencido (lo que rompía en iPhone/Safari).
+      const sb = window.__supaAnon || window.__supa;
+      const ins = await sb.from('reservations').insert(row).select('code');
       if (ins.error || !ins.data || !ins.data.length) {
-        this.setState({ mrError: isAuthErr(ins.error)
-          ? 'Tu sesión de admin venció. Tocá “Salir”, volvé a entrar y guardá de nuevo (no se guardó nada todavía).'
-          : 'No se pudo guardar la reserva (sin conexión con la base). No se guardó nada — probá de nuevo en un momento.', mrSaved: false });
+        this.setState({ mrError: 'No se pudo guardar la reserva (sin conexión con la base). No se guardó nada — probá de nuevo en un momento.', mrSaved: false });
         return;
       }
-      // Recién ahora liberamos los bloqueos que esta reserva reemplaza.
-      await window.__supa.from('blocked_dates').delete().in('date', nights);
+      // Liberar los bloqueos que esta reserva reemplaza (best-effort; no crítico).
+      try { await window.__supa.from('blocked_dates').delete().in('date', nights); } catch (_) {}
     }
 
     // Confirmado por la base: reflejamos en pantalla y limpiamos el formulario.
@@ -1207,6 +1214,69 @@ class Component extends DCLogic {
     });
 
     if (window.__supa) setTimeout(() => this.hydrateAll(), 500);
+  }
+
+  // Abre el formulario (pestaña Calendario) precargado para EDITAR una reserva.
+  startEdit(r) {
+    this.setState({
+      adminTab: 'cal', mrEditCode: r.code,
+      mrName: r.name || '', mrPhone: r.phone || '',
+      mrCheckIn: r.ci, mrCheckOut: r.co,
+      mrGuests: Math.max(1, Number(r.guests) || 1),
+      mrTotal: String(r.total || ''),
+      mrDeposit: r.deposit != null ? String(r.deposit) : '',
+      mrError: '', mrSaved: false
+    });
+  }
+  cancelEdit() {
+    this.setState({ mrEditCode: null, mrName: '', mrPhone: '', mrCheckIn: '', mrCheckOut: '', mrGuests: 2, mrTotal: '', mrDeposit: '', mrError: '', mrSaved: false });
+  }
+
+  // Guarda los cambios de una reserva existente (requiere sesión de admin).
+  async updateReservation() {
+    const s = this.state;
+    const code = s.mrEditCode;
+    if (!code) return;
+    const name = (s.mrName || '').trim();
+    const phone = (s.mrPhone || '').trim();
+    const ci = s.mrCheckIn, co = s.mrCheckOut;
+    const guests = Math.max(1, Number(s.mrGuests) || 1);
+    const total = Number(String(s.mrTotal).replace(/\D/g, '')) || 0;
+    const deposit = Number(String(s.mrDeposit).replace(/\D/g, '')) || 0;
+
+    if (!name || !phone) { this.setState({ mrError: 'Completá el nombre y el teléfono.', mrSaved: false }); return; }
+    if (!ci || !co) { this.setState({ mrError: 'Elegí la fecha de ingreso y la de salida.', mrSaved: false }); return; }
+    if (fromKey(co) <= fromKey(ci)) { this.setState({ mrError: 'La salida tiene que ser después del ingreso.', mrSaved: false }); return; }
+
+    // Noches de la nueva estadía.
+    const nights = [];
+    for (let x = fromKey(ci); x < fromKey(co); x.setDate(x.getDate() + 1)) nights.push(key(x.getFullYear(), x.getMonth(), x.getDate()));
+    // No chocar con OTRA reserva activa (excluyo la que estoy editando).
+    const busy = {};
+    s.reservations.forEach(r => {
+      if (r.code === code || (r.status !== 'PENDIENTE' && r.status !== 'CONFIRMADA')) return;
+      for (let x = fromKey(r.ci); x < fromKey(r.co); x.setDate(x.getDate() + 1)) busy[key(x.getFullYear(), x.getMonth(), x.getDate())] = true;
+    });
+    const clash = nights.filter(k => busy[k]);
+    if (clash.length) { this.setState({ mrError: 'Esas fechas chocan con otra reserva (' + clash.length + (clash.length === 1 ? ' noche' : ' noches') + ').', mrSaved: false }); return; }
+
+    if (window.__supa) {
+      const row = { name, phone, check_in: ci, check_out: co, guests, total, deposit: deposit > 0 ? deposit : null };
+      const isAuthErr = e => !!e && (e.code === 'PGRST301' || e.code === '401' || /jwt|token|expired|decode|key/i.test(String(e.message) + String(e.hint)));
+      let upd = await window.__supa.from('reservations').update(row).eq('code', code).select('code');
+      if (isAuthErr(upd.error)) {
+        try { await window.__supa.auth.refreshSession(); } catch (_) {}
+        upd = await window.__supa.from('reservations').update(row).eq('code', code).select('code');
+      }
+      if (upd.error || !upd.data || !upd.data.length) {
+        this.setState({ mrError: isAuthErr(upd.error)
+          ? 'Tu sesión de admin venció. Tocá “Salir”, volvé a entrar y guardá los cambios de nuevo.'
+          : 'No se pudieron guardar los cambios (sin conexión con la base). Probá de nuevo en un momento.', mrSaved: false });
+        return;
+      }
+    }
+    this.setState({ mrEditCode: null, mrName: '', mrPhone: '', mrCheckIn: '', mrCheckOut: '', mrGuests: 2, mrTotal: '', mrDeposit: '', mrError: '', mrSaved: true });
+    if (window.__supa) setTimeout(() => this.hydrateAll(), 400);
   }
 
   // Numero de WhatsApp -> solo digitos con codigo de pais, para armar wa.me.
@@ -1519,7 +1589,12 @@ class Component extends DCLogic {
       onMrGuests: e => this.set({ mrGuests: Number(String(e.target.value).replace(/\D/g, '')) || 1, mrSaved: false, mrError: '' }),
       onMrTotal: e => this.set({ mrTotal: String(e.target.value).replace(/\D/g, ''), mrSaved: false, mrError: '' }),
       onMrDeposit: e => this.set({ mrDeposit: String(e.target.value).replace(/\D/g, ''), mrSaved: false, mrError: '' }),
-      saveManualReservation: () => this.saveManualReservation(),
+      mrEditing: !!s.mrEditCode,
+      mrFormTitle: s.mrEditCode ? ('Editar reserva ' + s.mrEditCode) : 'Cargar una reserva a mano',
+      mrFormHint: s.mrEditCode ? 'Modificá los datos y tocá “Guardar cambios”.' : 'Para las reservas que llegan por WhatsApp, llamada o en persona. Al guardar, esas fechas quedan marcadas como reservadas en el calendario.',
+      mrSaveLabel: s.mrEditCode ? 'Guardar cambios' : 'Guardar reserva',
+      saveManualReservation: () => (this.state.mrEditCode ? this.updateReservation() : this.saveManualReservation()),
+      cancelEdit: () => this.cancelEdit(),
 
       sDate: s.step === 'date', sGuests: s.step === 'guests', sData: s.step === 'data', sSummary: s.step === 'summary', sPay: s.step === 'pay', sDone: s.step === 'done',
       showChosenStrip: s.step !== 'date' && s.step !== 'done',
@@ -1560,7 +1635,8 @@ class Component extends DCLogic {
         // Registrar en la base y confirmar ANTES de pasar a la pantalla de pago,
         // para que ninguna reserva del huésped se pierda en silencio.
         if (window.__supa) {
-          const ins = await window.__supa.from('reservations').insert({
+          const sb = window.__supaAnon || window.__supa;
+          const ins = await sb.from('reservations').insert({
             code: code, name: s.name || 'Huésped web', phone: s.phone || '—',
             check_in: s.checkIn, check_out: coKey, guests: s.guests, total: total, status: 'PENDIENTE'
           }).select('code');
@@ -1598,7 +1674,8 @@ class Component extends DCLogic {
         approve: () => decide(r.code, 'CONFIRMADA'),
         reject: () => decide(r.code, 'RECHAZADA'),
         cancel: () => { if (confirm('¿Cancelar esta reserva y liberar las fechas en el calendario?')) decide(r.code, 'RECHAZADA'); },
-        reactivate: () => { if (confirm('¿Reactivar esta reserva? Las fechas vuelven a marcarse como reservadas.')) decide(r.code, 'CONFIRMADA'); }
+        reactivate: () => { if (confirm('¿Reactivar esta reserva? Las fechas vuelven a marcarse como reservadas.')) decide(r.code, 'CONFIRMADA'); },
+        edit: () => this.startEdit(r)
       }, badge(r.status))),
 
       settingsFields: [
