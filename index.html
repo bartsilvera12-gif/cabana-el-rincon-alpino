@@ -778,7 +778,8 @@
               </sc-if>
               <sc-if value="{{ r.isInactive }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;gap:10px;margin-top:16px">
-                  <button onClick="{{ r.reactivate }}" style="flex:1;background:#2C4456;color:#F1F3F2;font-weight:700;font-size:14px;letter-spacing:0.5px;padding:15px;border:none;border-radius:12px;cursor:pointer">REACTIVAR RESERVA</button>
+                  <button onClick="{{ r.reactivate }}" style="flex:1;background:#2C4456;color:#F1F3F2;font-weight:700;font-size:14px;letter-spacing:0.5px;padding:15px;border:none;border-radius:12px;cursor:pointer">REACTIVAR</button>
+                  <button onClick="{{ r.del }}" style="flex:1;background:transparent;color:#9B3B2B;font-weight:700;font-size:14px;letter-spacing:0.5px;padding:15px;border:1px solid rgba(155,59,43,0.35);border-radius:12px;cursor:pointer">ELIMINAR</button>
                 </div>
               </sc-if>
             </div>
@@ -1247,6 +1248,34 @@ class Component extends DCLogic {
     this.setState({ mrEditCode: null, mrName: '', mrPhone: '', mrCheckIn: '', mrCheckOut: '', mrGuests: 2, mrTotal: '', mrDeposit: '', mrError: '', mrSaved: false });
   }
 
+  // Elimina DEFINITIVAMENTE una reserva (requiere sesión de admin).
+  async deleteReservation(code) {
+    const prevReservations = this.state.reservations, prevDates = this.state.dates;
+    // Optimista: la saco de la lista y libero sus fechas en el calendario.
+    this.setState(st => {
+      const target = st.reservations.find(r => r.code === code);
+      const d = Object.assign({}, st.dates);
+      if (target) { for (let x = fromKey(target.ci); x < fromKey(target.co); x.setDate(x.getDate() + 1)) delete d[key(x.getFullYear(), x.getMonth(), x.getDate())]; }
+      return { reservations: st.reservations.filter(r => r.code !== code), dates: d };
+    });
+    if (window.__supa) {
+      const isAuthErr = e => !!e && (e.code === 'PGRST301' || e.code === '401' || /jwt|token|expired|decode|key/i.test(String(e.message) + String(e.hint)));
+      let del = await window.__supa.from('reservations').delete().eq('code', code).select('code');
+      if (isAuthErr(del.error)) {
+        try { await window.__supa.auth.refreshSession(); } catch (_) {}
+        del = await window.__supa.from('reservations').delete().eq('code', code).select('code');
+      }
+      if (del.error || !del.data || !del.data.length) {
+        this.setState({ reservations: prevReservations, dates: prevDates });
+        alert(isAuthErr(del.error)
+          ? 'No se pudo eliminar: tu sesión de admin venció. Tocá “Salir”, volvé a entrar e intentá de nuevo.'
+          : 'No se pudo eliminar (problema de conexión). Probá de nuevo en un momento.');
+        return;
+      }
+      setTimeout(() => this.hydrateAll(), 300);
+    }
+  }
+
   // Guarda los cambios de una reserva existente (requiere sesión de admin).
   async updateReservation() {
     const s = this.state;
@@ -1696,7 +1725,8 @@ class Component extends DCLogic {
         reject: () => decide(r.code, 'RECHAZADA'),
         cancel: () => { if (confirm('¿Cancelar esta reserva y liberar las fechas en el calendario?')) decide(r.code, 'RECHAZADA'); },
         reactivate: () => { if (confirm('¿Reactivar esta reserva? Las fechas vuelven a marcarse como reservadas.')) decide(r.code, 'CONFIRMADA'); },
-        edit: () => this.startEdit(r)
+        edit: () => this.startEdit(r),
+        del: () => { if (confirm('¿Eliminar definitivamente esta reserva (' + r.code + ')? No se puede deshacer.')) this.deleteReservation(r.code); }
       }, badge(r.status))),
 
       settingsFields: [
