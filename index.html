@@ -1177,9 +1177,17 @@ class Component extends DCLogic {
     if (window.__supa) {
       const row = { code, name, phone, check_in: ci, check_out: co, guests, total, status: 'CONFIRMADA' };
       if (deposit > 0) row.deposit = deposit;
-      const ins = await window.__supa.from('reservations').insert(row).select('code');
+      const isAuthErr = e => !!e && (e.code === 'PGRST301' || e.code === '401' || /jwt|token|expired|decode|key/i.test(String(e.message) + String(e.hint)));
+      let ins = await window.__supa.from('reservations').insert(row).select('code');
+      if (isAuthErr(ins.error)) {
+        // Sesión de admin vencida: refrescar el token y reintentar una sola vez.
+        try { await window.__supa.auth.refreshSession(); } catch (_) {}
+        ins = await window.__supa.from('reservations').insert(row).select('code');
+      }
       if (ins.error || !ins.data || !ins.data.length) {
-        this.setState({ mrError: 'No se pudo guardar la reserva (sin conexión con la base). No se guardó nada — probá de nuevo en un momento.', mrSaved: false });
+        this.setState({ mrError: isAuthErr(ins.error)
+          ? 'Tu sesión de admin venció. Tocá “Salir”, volvé a entrar y guardá de nuevo (no se guardó nada todavía).'
+          : 'No se pudo guardar la reserva (sin conexión con la base). No se guardó nada — probá de nuevo en un momento.', mrSaved: false });
         return;
       }
       // Recién ahora liberamos los bloqueos que esta reserva reemplaza.
@@ -1381,10 +1389,16 @@ class Component extends DCLogic {
         // Confirmar que el cambio se guardó de verdad. Si RLS/sesión/conexión
         // lo impiden, .select() vuelve vacío: revertimos y avisamos, así el
         // calendario nunca queda mostrando algo que la base no guardó.
-        const upd = await window.__supa.from('reservations').update({ status: next }).eq('code', code).select('code');
+        const isAuthErr = e => !!e && (e.code === 'PGRST301' || e.code === '401' || /jwt|token|expired|decode|key/i.test(String(e.message) + String(e.hint)));
+        let upd = await window.__supa.from('reservations').update({ status: next }).eq('code', code).select('code');
+        if (isAuthErr(upd.error)) {
+          // Sesión de admin vencida: refrescar el token y reintentar una sola vez.
+          try { await window.__supa.auth.refreshSession(); } catch (_) {}
+          upd = await window.__supa.from('reservations').update({ status: next }).eq('code', code).select('code');
+        }
         if (upd.error || !upd.data || !upd.data.length) {
           this.setState({ reservations: prevReservations, dates: prevDates });
-          alert('No se pudo guardar el cambio. Puede ser un problema de conexión o que tu sesión de admin venció. Volvé a entrar e intentá de nuevo.');
+          alert('No se pudo guardar el cambio. Puede ser un problema de conexión o que tu sesión de admin venció. Tocá “Salir”, volvé a entrar e intentá de nuevo.');
           return;
         }
         setTimeout(() => this.hydrateAll(), 300);
