@@ -718,6 +718,9 @@
     </div>
 
     <div style="max-width:960px;margin:0 auto;padding:24px clamp(16px,4vw,24px) 60px">
+      <sc-if value="{{ connError }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FBE9E7;border:1px solid rgba(155,59,43,0.4);color:#9B3B2B;border-radius:12px;padding:14px 16px;margin-bottom:18px;font-size:14px;line-height:1.45">⚠️ Sin conexión con la base en este momento. Lo que ves puede estar desactualizado y los cambios podrían no guardarse. Reintentando solo…</div>
+      </sc-if>
       <!-- RESERVAS -->
       <sc-if value="{{ tabRes }}" hint-placeholder-val="{{ false }}">
       <div>
@@ -1080,25 +1083,38 @@ class Component extends DCLogic {
         checkOut: cfgR.data.check_out_time
       };
     }
-    const dates = {};
-    const rsvs = (resR && resR.data) ? resR.data : [];
-    rsvs.forEach(r => {
-      if (r.status !== 'PENDIENTE' && r.status !== 'CONFIRMADA') return;
-      const st = r.status === 'CONFIRMADA' ? 'confirmed' : 'pending';
-      const start = new Date(r.check_in + 'T00:00:00');
-      const end = new Date(r.check_out + 'T00:00:00');
-      for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-        dates[d.toISOString().slice(0, 10)] = st;
-      }
-    });
-    ((blkR && blkR.data) || []).forEach(b => { dates[b.date] = 'blocked'; });
-    patch.dates = dates;
-    patch.reservations = rsvs.map(r => ({
-      code: r.code, name: r.name, phone: r.phone,
-      ci: r.check_in, co: r.check_out, guests: Number(r.guests), total: Number(r.total),
-      deposit: r.deposit != null ? Number(r.deposit) : null,
-      status: r.status, created: new Date(r.created_at).toLocaleString('es-PY', { dateStyle: 'short', timeStyle: 'short' })
-    }));
+    // Si la lectura de reservas falló (backend caído o schema sin exponer),
+    // NO borramos lo que ya está en pantalla: avisamos (connError) y
+    // conservamos el último estado bueno, en vez de pintar el calendario vacío.
+    const resOk = resR && !resR.error && Array.isArray(resR.data);
+    const blkOk = blkR && !blkR.error && Array.isArray(blkR.data);
+    if (resOk) {
+      const dates = {};
+      resR.data.forEach(r => {
+        if (r.status !== 'PENDIENTE' && r.status !== 'CONFIRMADA') return;
+        const st = r.status === 'CONFIRMADA' ? 'confirmed' : 'pending';
+        const start = new Date(r.check_in + 'T00:00:00');
+        const end = new Date(r.check_out + 'T00:00:00');
+        for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+          dates[d.toISOString().slice(0, 10)] = st;
+        }
+      });
+      if (blkOk) blkR.data.forEach(b => { dates[b.date] = 'blocked'; });
+      patch.dates = dates;
+      patch.reservations = resR.data.map(r => ({
+        code: r.code, name: r.name, phone: r.phone,
+        ci: r.check_in, co: r.check_out, guests: Number(r.guests), total: Number(r.total),
+        deposit: r.deposit != null ? Number(r.deposit) : null,
+        status: r.status, created: new Date(r.created_at).toLocaleString('es-PY', { dateStyle: 'short', timeStyle: 'short' })
+      }));
+      patch.connError = false;
+      clearTimeout(this._hydrateRetry);
+    } else {
+      // Dejamos el estado anterior intacto y reintentamos solos en unos segundos.
+      patch.connError = true;
+      clearTimeout(this._hydrateRetry);
+      this._hydrateRetry = setTimeout(() => this.hydrateAll(), 6000);
+    }
     if (galR && galR.data) patch.dbGallery = galR.data;
     this.setState(prev => Object.assign({}, prev, patch));
   }
@@ -1154,6 +1170,23 @@ class Component extends DCLogic {
     if (occupied.length) { this.setState({ mrError: 'Esas fechas ya tienen una reserva (' + occupied.length + (occupied.length === 1 ? ' noche' : ' noches') + '). Revisá el calendario.', mrSaved: false }); return; }
 
     const code = 'RA-' + String(s.nextCode).padStart(5, '0');
+
+    // Guardar en la base PRIMERO y confirmar que realmente entró, ANTES de
+    // decir "guardado". Si falla (backend caído/schema sin exponer), avisamos
+    // y NO fingimos éxito ni tocamos el calendario: no se pierde nada en silencio.
+    if (window.__supa) {
+      const row = { code, name, phone, check_in: ci, check_out: co, guests, total, status: 'CONFIRMADA' };
+      if (deposit > 0) row.deposit = deposit;
+      const ins = await window.__supa.from('reservations').insert(row).select('code');
+      if (ins.error || !ins.data || !ins.data.length) {
+        this.setState({ mrError: 'No se pudo guardar la reserva (sin conexión con la base). No se guardó nada — probá de nuevo en un momento.', mrSaved: false });
+        return;
+      }
+      // Recién ahora liberamos los bloqueos que esta reserva reemplaza.
+      await window.__supa.from('blocked_dates').delete().in('date', nights);
+    }
+
+    // Confirmado por la base: reflejamos en pantalla y limpiamos el formulario.
     this.setState(st2 => {
       const d = Object.assign({}, st2.dates);
       nights.forEach(kk => { d[kk] = 'confirmed'; });   // pisa cualquier bloqueo previo
@@ -1165,15 +1198,7 @@ class Component extends DCLogic {
       };
     });
 
-    if (window.__supa) {
-      // Liberar en la base los bloqueos de esas noches (la reserva los reemplaza),
-      // si no hydrateAll volveria a pintarlas como bloqueadas al recargar.
-      await window.__supa.from('blocked_dates').delete().in('date', nights);
-      const row = { code, name, phone, check_in: ci, check_out: co, guests, total, status: 'CONFIRMADA' };
-      if (deposit > 0) row.deposit = deposit;
-      await window.__supa.from('reservations').insert(row);
-      setTimeout(() => this.hydrateAll(), 500);
-    }
+    if (window.__supa) setTimeout(() => this.hydrateAll(), 500);
   }
 
   // Numero de WhatsApp -> solo digitos con codigo de pais, para armar wa.me.
@@ -1341,6 +1366,7 @@ class Component extends DCLogic {
       : { badgeBg: '#F0DDB4', badgeFg: '#6B4B1E' };
 
     const decide = async (code, next) => {
+      const prevReservations = this.state.reservations, prevDates = this.state.dates;
       this.setState(st => {
         const rs = st.reservations.map(r => r.code === code ? Object.assign({}, r, { status: next }) : r);
         const target = st.reservations.find(r => r.code === code);
@@ -1352,7 +1378,15 @@ class Component extends DCLogic {
         return { reservations: rs, dates: d };
       });
       if (window.__supa) {
-        await window.__supa.from('reservations').update({ status: next }).eq('code', code);
+        // Confirmar que el cambio se guardó de verdad. Si RLS/sesión/conexión
+        // lo impiden, .select() vuelve vacío: revertimos y avisamos, así el
+        // calendario nunca queda mostrando algo que la base no guardó.
+        const upd = await window.__supa.from('reservations').update({ status: next }).eq('code', code).select('code');
+        if (upd.error || !upd.data || !upd.data.length) {
+          this.setState({ reservations: prevReservations, dates: prevDates });
+          alert('No se pudo guardar el cambio. Puede ser un problema de conexión o que tu sesión de admin venció. Volvé a entrar e intentá de nuevo.');
+          return;
+        }
         setTimeout(() => this.hydrateAll(), 300);
       }
     };
@@ -1371,6 +1405,7 @@ class Component extends DCLogic {
 
     return {
       isSite: s.view === 'site', isAdmin: s.view === 'admin', needsLogin: s.view === 'admin' && !s.loggedIn, loggedIn: s.view === 'admin' && s.loggedIn,
+      connError: !!s.connError,
       menuOpen: s.menuOpen, toggleMenu: () => this.set({ menuOpen: !s.menuOpen }), closeMenu: () => this.set({ menuOpen: false }),
       foldChars: Array.from('El Rincón Alpino').map((ch, i) => ({
         ch: ch === ' ' ? '\u00A0' : ch,
@@ -1508,19 +1543,25 @@ class Component extends DCLogic {
       ],
       goPay: async () => {
         const code = 'RA-' + String(s.nextCode).padStart(5, '0');
+        // Registrar en la base y confirmar ANTES de pasar a la pantalla de pago,
+        // para que ninguna reserva del huésped se pierda en silencio.
+        if (window.__supa) {
+          const ins = await window.__supa.from('reservations').insert({
+            code: code, name: s.name || 'Huésped web', phone: s.phone || '—',
+            check_in: s.checkIn, check_out: coKey, guests: s.guests, total: total, status: 'PENDIENTE'
+          }).select('code');
+          if (ins.error || !ins.data || !ins.data.length) {
+            alert('No pudimos registrar tu reserva por un problema de conexión. Por favor escribinos por WhatsApp para confirmar tu fecha.');
+            return;
+          }
+        }
         this.setState(st => {
           const d = Object.assign({}, st.dates);
           this.nightKeys().forEach(k => { d[k] = 'pending'; });
           const res = { code, name: st.name || 'Huésped web', phone: st.phone || '—', ci: st.checkIn, co: coKey, guests: st.guests, total, status: 'PENDIENTE', created: 'ahora' };
           return { step: 'pay', code, dates: d, reservations: [res].concat(st.reservations), nextCode: st.nextCode + 1 };
         });
-        if (window.__supa) {
-          await window.__supa.from('reservations').insert({
-            code: code, name: s.name || 'Huésped web', phone: s.phone || '—',
-            check_in: s.checkIn, check_out: coKey, guests: s.guests, total: total, status: 'PENDIENTE'
-          });
-          setTimeout(() => this.hydrateAll(), 500);
-        }
+        if (window.__supa) setTimeout(() => this.hydrateAll(), 500);
       },
       code: s.code || 'RA-00124',
       aliasBtn: s.aliasCopied ? '✓ ALIAS COPIADO' : 'COPIAR ALIAS',
